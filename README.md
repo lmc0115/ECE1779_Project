@@ -1,1 +1,123 @@
-# ECE1779_Project
+
+
+  
+
+# Motivation
+
+At the University of Toronto, news about campus activities and student life, including workshops, career fairs, and networking sessions, is distributed over various platforms, such as social media sites, departmental sites, e-newsletters, emails and Discord channels. This disintegrated communication framework with scattered event and activity details causes confusion among students because they struggle to stay informed of events that align with their interests. By the inconvenience, most students lose opportunities to be part of the wider campus life as they miss extracurricular activities that can enhance their university experience.
+
+Currently, there are some solutions to share campus events, each with some notable drawbacks. Most events are frequently advertised on Quercus, the official academic site of the University of Toronto, though departments and faculties. However, Quercus mainly covers the university-sponsored academic events and hardly covers the events of external associations such as IEEE, IISE, or YNCN.  Besides Quercus, most departments use Instagram pages and Discord servers to promote the involvement of students. Although they are widely used platforms, they both lack the features of accessibility as well as coordination. Resultant delays and uneven coverage happens to Instagram pages since they involve manual approval after sending the event details to the Instagram page administrators. Discord servers primarily rely on invitation-only channels, making them difficult for users to locate and navigate, especially for the new or non-discord users. There is currently no unified system that aggregates events across departments and student groups into a single, interactive platform.
+
+To address this gap, University Connection(UniConn) is proposed as a centralized, cloud-based platform that consolidates all UofT-related events into one accessible and user-friendly interface. With the target users include UofT students who are actively seeking organized access to campus events, and event organizers who require a streamlined and interactive platform to reach their audiences more effectively, the system will allow users with different roles perform effective and comprehensive interactions. For event organizers such as departments, clubs, and organizations, UniConn will allow them to publish event details and organizer profiles through a standardized and easily searchable format. For UofT students, UniConn will allow them to browse, filter, and interact with events that align with their academic and social interests, fostering a more connected and collaborative campus environment. 
+
+By centralizing events and activity information, UniConn enhances communication efficiency, accessibility, and community engagement effectively within the university ecosystem. In addition to its practical impact, the project also demonstrates the application of modern cloud-native architecture, featuring Dockerized backend services, PostgreSQL databases, and scalable deployment on DigitalOcean to ensure reliability, performance, and extensibility.
+
+# Objective & Key Features
+
+## Objective
+
+The platform to be developed will set up a <b>centralized event aggregation platform</b> that will bring together events from different University of Toronto departments, faculties, and student organizations in one user-friendly portal. <b>This platform will act as the main entry point serving students, faculty members, and authorized organizations to find, organize, and attend university-wide events, to avoid excessive dispersed event information spread across different platforms.</b> The platform will allow authorized department personnel and verified organizers to <b>upload, edit, and manage</b> event information directly on the platform, making sure that the listings are always current and correct. The authorized student users will be able to <b>view and take part</b> in event participations as well as collaborative discussions, making sure that the students can attend any event or discuss anything that suits them.
+
+Along with the centralized event aggregation platform, the system will also include <b>collaborative engagement features</b> such as event discussions, commenting, and RSVP functionality, to promote interaction and engagement across faculties. These social components aim to promote a sense of community among students, encouraging cross-disciplinary participation and dialogue around shared interests and academic activities.
+
+In addition to the collaborative engagement features, all user data, events, and discussion threads will be securely stored in a <b>PostgreSQL database</b> backed by persistent DigitalOcean volumes. This approach will not only ensure <b>reliable state management</b> and data durability, but also allow the system to maintain integrity and continuity across container restarts, software updates, and redeployments.
+
+Besides the reliable state management, the platform will also be deployed following <b>cloud-native design principles</b> using <b>Docker Swarm on DigitalOcean</b>. This enables effective container orchestration, replication, and load balancing, ensuring the application remains responsive and stable even under heavy, concurrent traffic conditions, such as during major university events or registration periods.
+
+Furthermore, the system will integrate observability and monitoring functions through combined dashboards depicting major performance metrics such as CPU utilization, memory usage, API latency, and database utilization. The monitoring facilities will facilitate enhanced transparency, proactive debugging, as well as maintain the platform's reliability and performance during its cloud migrations.
+
+## Key Features
+
+| Objective                                       | Key Features / Implementation                                                       | Description                                                                                                                                                                                                                                                                |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Centralized Event Aggregation                   | Using REST API for event data management and retrieval according to different users | Provides standardized REST API endpoints that will enable access for different users based on user authentication levels, perform appropriate CRUD operations (such as creating, updating, viewing, or deleting event data).                                               |
+|                                                 | Search and filter events by timestamp, faculty, type and other related preferences. | Enables users to quickly locate specific events within the centralized database.                                                                                                                                                                                           |
+| Collaborative Engagement and Real-Time Insights | Via DigitalOcean Functions for Serverless notifications                             | Sending automated alerts/notifications when organizers create or update events, or reminding students or organizers when crucial events occur.                                                                                                                             |
+|                                                 | Integration with External Services for extra notifications                          | Integrate with external services (e.g., SendGrid API) to send automated RSVP confirmations and event reminders, enhancing the serverless notification workflow.<br>                                                                                                        |
+| Reliable State Management and Data Integrity    | Using PostgreSQL for event storage with persistent DigitalOcean volumes             | Stores all event information securely and ensures data durability across redeployments and restarts for long-term records.                                                                                                                                                 |
+|                                                 | User authentication and organization-based access                                   | Integrates secure authentication and manages role-based authorization for different users (e.g., department staff, organizers, and student users). Also, enforcing HTTPS encryption and secrets management to protect credentials, API keys, and sensitive configurations. |
+| Cloud-Native Deployment and Scalability         | Containerization and Local Development (Docker + Docker Compose)                    | Running the core services (e.g.Node.js backend, PostgreSQL database and Redis) in separate Docker containers. Using a Docker Compose file to manage the multi-container setup to maintain development and deployment consistency.                                          |
+|                                                 | Deployment on DigitalOcean using Docker Swarm for orchestration                     | Provides container orchestration, replication, and load balancing for scalable performance under high traffic.                                                                                                                                                             |
+| Observability and System Reliability            | Monitoring alerts for high event volume or system health                            | Tracks CPU, memory, API latency, and database load. Also monitoring alerts for unusual system behavior.                                                                                                                                                                    |
+
+**
+
+
+
+# **Tentative Plan**
+
+## Goals and Deliverables
+
+| **Phase**                                             | **Timeline (Week)** | **Goals**                                                                                                                                   | **Key Deliverables**                                                                                                                             |
+| ----------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Phase 1: Project Setup & Architecture Design**      | Week 1–2            | - Define system architecture and data model<br/>- Set up Dockerized development environment<br/>- Configure PostgreSQL and Redis containers | - Architecture diagram<br/>- Database schema design<br/>- Working Docker Compose setup (API + DB + Redis)                                        |
+| **Phase 2: Backend API & Authentication**             | Week 3–4            | - Implement RESTful API endpoints for events, users, and authentication<br/>- Enable JWT-based user authentication and role management      | - Auth & user management APIs<br/>- CRUD endpoints for event data<br/>- Secure HTTPS-ready backend                                               |
+| **Phase 3: Event Aggregation & Interaction Features** | Week 5–6            | - Implement event aggregation, search, and filtering<br/>- Enable collaborative features (commenting, RSVP, notifications)                  | - Functional search and filter endpoints<br/>- Commenting and RSVP modules<br/>- DigitalOcean Function or SendGrid integration for notifications |
+| **Phase 4: Cloud Deployment & Monitoring**            | Week 7              | - Deploy services to DigitalOcean with Docker Swarm<br/>- Configure monitoring dashboards for API latency, CPU, and DB load                 | - Live DigitalOcean deployment<br/>- Monitoring dashboards and alerting configured                                                               |
+| **Phase 5: Testing, Optimization & Final Report**     | Week 8              | - Perform integration and load testing<br/>- Prepare final project report and presentation                                                  | - Tested and stable system<br/>- Final report + presentation slides                                                                              |
+
+## Division of Work and Roles
+
+| **Category**                         | **Role**    | **Responsibilities / Tasks**                                                                                                                                                                 |
+| ------------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Backend Development**              | Developer A | - Design API endpoints for events and users <br/>- Implement authentication (JWT) and role<br/>-based access  <br/>- Handle REST routing and request validation                              |
+| **Database & Data Management**       | Developer B | - Design PostgreSQL schema<br/>- Manage migrations and indexing<br/>- Integrate persistent DigitalOcean Volumes for data durability                                                          |
+| **Cloud & DevOps**                   | Developer C | - Set up Docker Compose for local dev<br/>- Deploy with Docker Swarm on DigitalOcean<br/>- Configure CI/CD with GitHub Actions<br/>- Manage monitoring and logging tools                     |
+| **Frontend & Integration / Testing** | Developer D | - Integrate API endpoints with frontend (if applicable)<br/> - Implement search/filter UI logic<br/> - Conduct testing and documentation<br/>- Prepare final report & presentation materials |
+
+## Development Tools and Libraries
+
+| **Component**         | **Tool / Library**                                | **Purpose**                                |
+| --------------------- | ------------------------------------------------- | ------------------------------------------ |
+| **Backend Framework** | Node.js (Express.js)                              | REST API development                       |
+| **Database**          | PostgreSQL + DigitalOcean Volumes                 | Persistent event and user data storage     |
+| **Cache / Queue**     | Redis                                             | Caching and notification management        |
+| **Containerization**  | Docker, Docker Compose                            | Isolated environment setup for services    |
+| **Deployment**        | Docker Swarm (DigitalOcean)                       | Orchestration, scaling, and load balancing |
+| **CI/CD**             | GitHub Actions                                    | Automated builds, testing, and deployment  |
+| **Monitoring**        | Prometheus + Grafana (or DigitalOcean Monitoring) | Observability and performance metrics      |
+| **External APIs**     | SendGrid / DigitalOcean Functions                 | Email and event notifications              |
+| **Security**          | HTTPS, JWT, dotenv                                | Data protection and secure access          |
+| **Version Control**   | Git / GitHub                                      | Code collaboration and version tracking    |
+
+---
+
+## Evaluation Metrics
+
+| **Aspect**          | **Metric**                                  | **Goal / Success Criteria**                   |
+| ------------------- | ------------------------------------------- | --------------------------------------------- |
+| **Functionality**   | % of key features implemented               | ≥ 90% of planned functionality operational    |
+| **Reliability**     | API uptime and DB persistence under restart | ≥ 99% uptime with persistent data             |
+| **Performance**     | Average API response time                   | ≤ 200ms under normal load                     |
+| **Scalability**     | Concurrent user handling via Swarm          | System stable with 100+ simultaneous requests |
+| **Security**        | Authentication and role-based access        | All endpoints secured via JWT and HTTPS       |
+| **Maintainability** | Code modularity and documentation           | All modules well-documented and tested        |
+| **User Experience** | Search accuracy and ease of navigation      | High user satisfaction (subjective eval)      |
+
+## Expected Outcomes and Learning Goals
+
+### Expected Outcomes
+
+- A fully functional, **cloud-deployed centralized event aggregation system** for UofT.
+
+- **Secure user authentication** and **role-based event management**.
+
+- Reliable **PostgreSQL-based storage** with volume persistence.
+
+- **Scalable and monitored** application running on Docker Swarm.
+
+- Integrated **notification and collaboration** features (comments, RSVP, etc.).
+
+### **Learning Goals**
+
+- Apply **cloud-native architecture principles** and container orchestration.
+
+- Gain experience with **PostgreSQL persistence and API integration**.
+
+- Learn **Docker Swarm deployment** and **DigitalOcean monitoring**.
+
+- Understand and implement **CI/CD pipelines** for real-world projects.
+
+- Strengthen **team collaboration** and project management skills in a cloud environment.
+
+
