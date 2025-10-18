@@ -26,7 +26,7 @@ Besides the reliable state management, the platform will also be deployed follow
 Furthermore, the system will integrate observability and monitoring functions through combined dashboards depicting major performance metrics such as CPU utilization, memory usage, API latency, and database utilization. The monitoring facilities will facilitate enhanced transparency, proactive debugging, as well as maintain the platform's reliability and performance during its cloud migrations.
 
 
-**Key Features**
+## Key Features
 
 | Objective | Key Features / Implementation | Description |
 | ----- | ----- | ----- |
