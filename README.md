@@ -13,7 +13,7 @@ By centralizing events and activity information, UniConn enhances communication 
 
 # Objective & Key Features
 
-**Objective**
+## Objective
 
 The platform to be developed will set up a <b>centralized event aggregation platform</b> that will bring together events from different University of Toronto departments, faculties, and student organizations in one user-friendly portal. <b>This platform will act as the main entry point serving students, faculty members, and authorized organizations to find, organize, and attend university-wide events, to avoid excessive dispersed event information spread across different platforms.</b> The platform will allow authorized department personnel and verified organizers to <b>upload, edit, and manage</b> event information directly on the platform, making sure that the listings are always current and correct. The authorized student users will be able to <b>view and take part</b> in event participations as well as collaborative discussions, making sure that the students can attend any event or discuss anything that suits them.
 
