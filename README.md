@@ -1,5 +1,3 @@
-
-
   
 
 # Motivation
@@ -40,84 +38,66 @@ Furthermore, the system will integrate observability and monitoring functions th
 |                                                 | Deployment on DigitalOcean using Docker Swarm for orchestration                     | Provides container orchestration, replication, and load balancing for scalable performance under high traffic.                                                                                                                                                             |
 | Observability and System Reliability            | Monitoring alerts for high event volume or system health                            | Tracks CPU, memory, API latency, and database load. Also monitoring alerts for unusual system behavior.                                                                                                                                                                    |
 
-**
-
-
 
 # **Tentative Plan**
 
-## Goals and Deliverables
+## **Goals and Deliverables**
 
-| **Phase**                                             | **Timeline (Week)** | **Goals**                                                                                                                                   | **Key Deliverables**                                                                                                                             |
-| ----------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Phase 1: Project Setup & Architecture Design**      | Week 1–2            | - Define system architecture and data model<br/>- Set up Dockerized development environment<br/>- Configure PostgreSQL and Redis containers | - Architecture diagram<br/>- Database schema design<br/>- Working Docker Compose setup (API + DB + Redis)                                        |
-| **Phase 2: Backend API & Authentication**             | Week 3–4            | - Implement RESTful API endpoints for events, users, and authentication<br/>- Enable JWT-based user authentication and role management      | - Auth & user management APIs<br/>- CRUD endpoints for event data<br/>- Secure HTTPS-ready backend                                               |
-| **Phase 3: Event Aggregation & Interaction Features** | Week 5–6            | - Implement event aggregation, search, and filtering<br/>- Enable collaborative features (commenting, RSVP, notifications)                  | - Functional search and filter endpoints<br/>- Commenting and RSVP modules<br/>- DigitalOcean Function or SendGrid integration for notifications |
-| **Phase 4: Cloud Deployment & Monitoring**            | Week 7              | - Deploy services to DigitalOcean with Docker Swarm<br/>- Configure monitoring dashboards for API latency, CPU, and DB load                 | - Live DigitalOcean deployment<br/>- Monitoring dashboards and alerting configured                                                               |
-| **Phase 5: Testing, Optimization & Final Report**     | Week 8              | - Perform integration and load testing<br/>- Prepare final project report and presentation                                                  | - Tested and stable system<br/>- Final report + presentation slides                                                                              |
+| Phase | Timeline | Goals | Key Deliverables |
+| ----- | ----- | ----- | ----- |
+| **Phase 1: Project Setup & Architecture Design** | 10.20-10.26 | \- Define system architecture and data model \- Set up Dockerized development environment \- Configure PostgreSQL and Redis containers | \- Architecture diagram \- Database schema design \- Working Docker Compose setup (API \+ DB \+ Redis) |
+| **Phase 2: Backend API & Authentication** | 10.27-11.2 | \- Implement RESTful API endpoints for events, users, and authentication \- Enable JWT-based user authentication and role management | \- Auth & user management APIs \- CRUD endpoints for event data \- Secure HTTPS-ready backend |
+| **Phase 3: Event Aggregation & Interaction Features** | 11.3-11.16 | \- Implement event aggregation, search, and filtering \- Enable collaborative features (commenting, RSVP, notifications) | \- Functional search and filter endpoints \- Commenting and RSVP modules \- DigitalOcean Function or SendGrid integration for notifications |
+| **Phase 4: Cloud Deployment & Monitoring** | 11.3-11.16 | \- Deploy services to DigitalOcean with Docker Swarm \- Configure monitoring dashboards for API latency, CPU, and DB load | \- Live DigitalOcean deployment \- Monitoring dashboards and alerting configured |
+| **Phase 5: Testing, Optimization**  | 11.17-11.21 | \- Perform integration and load testing | \- Tested and stable system |
+| **Phase 6: Final Report** | 11.21-12.9 | \- Prepare final project report and presentation | \- Final report \+ presentation slides |
 
-## Division of Work and Roles
+## **Division of Work and Roles**
 
-| **Category**                         | **Role**    | **Responsibilities / Tasks**                                                                                                                                                                 |
-| ------------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Backend Development**              | Developer A | - Design API endpoints for events and users <br/>- Implement authentication (JWT) and role<br/>-based access  <br/>- Handle REST routing and request validation                              |
-| **Database & Data Management**       | Developer B | - Design PostgreSQL schema<br/>- Manage migrations and indexing<br/>- Integrate persistent DigitalOcean Volumes for data durability                                                          |
-| **Cloud & DevOps**                   | Developer C | - Set up Docker Compose for local dev<br/>- Deploy with Docker Swarm on DigitalOcean<br/>- Configure CI/CD with GitHub Actions<br/>- Manage monitoring and logging tools                     |
-| **Frontend & Integration / Testing** | Developer D | - Integrate API endpoints with frontend (if applicable)<br/> - Implement search/filter UI logic<br/> - Conduct testing and documentation<br/>- Prepare final report & presentation materials |
+| Category | Role | Responsibilities / Tasks |
+| ----- | ----- | ----- |
+| **Backend Development** | Spiro Li | \- Design API endpoints for events and users \- Implement authentication (JWT) and role \-based access  \- Handle REST routing and request validation |
+| **Database & Data Management** | Weijie Zhu | \- Design PostgreSQL schema \- Manage migrations and indexing \- Integrate persistent DigitalOcean Volumes for data durability |
+| **Cloud & DevOps** | Jerry Chen | \- Set up Docker Compose for local dev \- Deploy with Docker Swarm on DigitalOcean \- Configure CI/CD with GitHub Actions \- Manage monitoring and logging tools |
+| **Frontend & Integration / Testing** | Muchen Liu | \- Integrate API endpoints with frontend (if applicable) \- Implement search/filter UI logic \- Conduct testing and documentation \- Prepare final report & presentation materials |
 
-## Development Tools and Libraries
+## **Development Tools and Libraries**
 
-| **Component**         | **Tool / Library**                                | **Purpose**                                |
-| --------------------- | ------------------------------------------------- | ------------------------------------------ |
-| **Backend Framework** | Node.js (Express.js)                              | REST API development                       |
-| **Database**          | PostgreSQL + DigitalOcean Volumes                 | Persistent event and user data storage     |
-| **Cache / Queue**     | Redis                                             | Caching and notification management        |
-| **Containerization**  | Docker, Docker Compose                            | Isolated environment setup for services    |
-| **Deployment**        | Docker Swarm (DigitalOcean)                       | Orchestration, scaling, and load balancing |
-| **CI/CD**             | GitHub Actions                                    | Automated builds, testing, and deployment  |
-| **Monitoring**        | Prometheus + Grafana (or DigitalOcean Monitoring) | Observability and performance metrics      |
-| **External APIs**     | SendGrid / DigitalOcean Functions                 | Email and event notifications              |
-| **Security**          | HTTPS, JWT, dotenv                                | Data protection and secure access          |
-| **Version Control**   | Git / GitHub                                      | Code collaboration and version tracking    |
+| Component | Tool / Library | Purpose |
+| ----- | ----- | ----- |
+| **Backend Framework** | Node.js (Express.js) | REST API development |
+| **Database** | PostgreSQL \+ DigitalOcean Volumes | Persistent event and user data storage |
+| **Cache / Queue** | Redis | Caching and notification management |
+| **Containerization** | Docker, Docker Compose | Isolated environment setup for services |
+| **Deployment** | Docker Swarm (DigitalOcean) | Orchestration, scaling, and load balancing |
+| **CI/CD** | GitHub Actions | Automated builds, testing, and deployment |
+| **Monitoring** | Prometheus \+ Grafana (or DigitalOcean Monitoring) | Observability and performance metrics |
+| **External APIs** | SendGrid / DigitalOcean Functions | Email and event notifications |
+| **Security** | HTTPS, JWT, dotenv(optional) | Data protection and secure access |
+| **Version Control** | Git / GitHub | Code collaboration and version tracking |
 
 ---
 
-## Evaluation Metrics
+## **Evaluation Metrics**
 
-| **Aspect**          | **Metric**                                  | **Goal / Success Criteria**                   |
-| ------------------- | ------------------------------------------- | --------------------------------------------- |
-| **Functionality**   | % of key features implemented               | ≥ 90% of planned functionality operational    |
-| **Reliability**     | API uptime and DB persistence under restart | ≥ 99% uptime with persistent data             |
-| **Performance**     | Average API response time                   | ≤ 200ms under normal load                     |
-| **Scalability**     | Concurrent user handling via Swarm          | System stable with 100+ simultaneous requests |
-| **Security**        | Authentication and role-based access        | All endpoints secured via JWT and HTTPS       |
-| **Maintainability** | Code modularity and documentation           | All modules well-documented and tested        |
-| **User Experience** | Search accuracy and ease of navigation      | High user satisfaction (subjective eval)      |
+| Aspect | Metric | Expected Goal  |
+| ----- | ----- | ----- |
+| **Functionality** | % of key features implemented | ≥ 90% of planned functionality operational |
+| **Reliability** | API uptime and DB persistence under restart | ≥ 99% uptime with persistent data |
+| **Performance** | Average API response time | ≤ 200ms under normal load |
+| **Scalability** | Concurrent user handling via Swarm | System stable with 100+ simultaneous requests |
+| **Security** | Authentication and role-based access | All endpoints secured via JWT and HTTPS |
+| **Maintainability** | Code modularity and documentation | All modules well-documented and tested |
+| **User Experience** | Search accuracy and ease of navigation | High user satisfaction (subjective eval) |
 
-## Expected Outcomes and Learning Goals
+## **Expected Outcomes**
 
-### Expected Outcomes
+* A fully functional, **cloud-deployed centralized event aggregation system** for UofT.
 
-- A fully functional, **cloud-deployed centralized event aggregation system** for UofT.
+* **Secure user authentication** and **role-based event management**.
 
-- **Secure user authentication** and **role-based event management**.
+* Reliable **PostgreSQL-based storage** with volume persistence.
 
-- Reliable **PostgreSQL-based storage** with volume persistence.
+* **Scalable and monitored** application running on Docker Swarm.
 
-- **Scalable and monitored** application running on Docker Swarm.
-
-- Integrated **notification and collaboration** features (comments, RSVP, etc.).
-
-### **Learning Goals**
-
-- Apply **cloud-native architecture principles** and container orchestration.
-
-- Gain experience with **PostgreSQL persistence and API integration**.
-
-- Learn **Docker Swarm deployment** and **DigitalOcean monitoring**.
-
-- Understand and implement **CI/CD pipelines** for real-world projects.
-
-- Strengthen **team collaboration** and project management skills in a cloud environment.
-
-
+* Integrated **notification and collaboration** features (comments, RSVP, etc.).
