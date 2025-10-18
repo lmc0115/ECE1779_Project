@@ -39,9 +39,9 @@ Furthermore, the system will integrate observability and monitoring functions th
 | Observability and System Reliability            | Monitoring alerts for high event volume or system health                            | Tracks CPU, memory, API latency, and database load. Also monitoring alerts for unusual system behavior.                                                                                                                                                                    |
 
 
-# **Tentative Plan**
+# Tentative Plan
 
-## **Goals and Deliverables**
+## Goals and Deliverables
 
 | Phase | Timeline | Goals | Key Deliverables |
 | ----- | ----- | ----- | ----- |
@@ -52,7 +52,7 @@ Furthermore, the system will integrate observability and monitoring functions th
 | **Phase 5: Testing, Optimization**  | 11.17-11.21 | \- Perform integration and load testing | \- Tested and stable system |
 | **Phase 6: Final Report** | 11.21-12.9 | \- Prepare final project report and presentation | \- Final report \+ presentation slides |
 
-## **Division of Work and Roles**
+## Division of Work and Roles
 
 | Category | Role | Responsibilities / Tasks |
 | ----- | ----- | ----- |
@@ -61,7 +61,7 @@ Furthermore, the system will integrate observability and monitoring functions th
 | **Cloud & DevOps** | Jerry Chen | \- Set up Docker Compose for local dev \- Deploy with Docker Swarm on DigitalOcean \- Configure CI/CD with GitHub Actions \- Manage monitoring and logging tools |
 | **Frontend & Integration / Testing** | Muchen Liu | \- Integrate API endpoints with frontend (if applicable) \- Implement search/filter UI logic \- Conduct testing and documentation \- Prepare final report & presentation materials |
 
-## **Development Tools and Libraries**
+## Development Tools and Libraries
 
 | Component | Tool / Library | Purpose |
 | ----- | ----- | ----- |
@@ -78,7 +78,7 @@ Furthermore, the system will integrate observability and monitoring functions th
 
 ---
 
-## **Evaluation Metrics**
+## Evaluation Metrics
 
 | Aspect | Metric | Expected Goal  |
 | ----- | ----- | ----- |
@@ -90,7 +90,7 @@ Furthermore, the system will integrate observability and monitoring functions th
 | **Maintainability** | Code modularity and documentation | All modules well-documented and tested |
 | **User Experience** | Search accuracy and ease of navigation | High user satisfaction (subjective eval) |
 
-## **Expected Outcomes**
+## Expected Outcomes
 
 * A fully functional, **cloud-deployed centralized event aggregation system** for UofT.
 
