@@ -118,6 +118,6 @@ Furthermore, the system will integrate observability and monitoring functions th
 
 - Understand and implement **CI/CD pipelines** for real-world projects.
 
-- Strengthen **team collaboration** and project management skills in a cloud environment.
+- Strengthen **team collaboration** and project management skills in a cloud environment.    
 
 
