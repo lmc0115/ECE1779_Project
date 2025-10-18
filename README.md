@@ -15,7 +15,7 @@ By centralizing events and activity information, UniConn enhances communication 
 
 # Objective & Key Features
 
-## Objective
+**Objective**
 
 The platform to be developed will set up a <b>centralized event aggregation platform</b> that will bring together events from different University of Toronto departments, faculties, and student organizations in one user-friendly portal. <b>This platform will act as the main entry point serving students, faculty members, and authorized organizations to find, organize, and attend university-wide events, to avoid excessive dispersed event information spread across different platforms.</b> The platform will allow authorized department personnel and verified organizers to <b>upload, edit, and manage</b> event information directly on the platform, making sure that the listings are always current and correct. The authorized student users will be able to <b>view and take part</b> in event participations as well as collaborative discussions, making sure that the students can attend any event or discuss anything that suits them.
 
@@ -27,21 +27,21 @@ Besides the reliable state management, the platform will also be deployed follow
 
 Furthermore, the system will integrate observability and monitoring functions through combined dashboards depicting major performance metrics such as CPU utilization, memory usage, API latency, and database utilization. The monitoring facilities will facilitate enhanced transparency, proactive debugging, as well as maintain the platform's reliability and performance during its cloud migrations.
 
-## Key Features
 
-| Objective                                       | Key Features / Implementation                                                       | Description                                                                                                                                                                                                                                                                |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Centralized Event Aggregation                   | Using REST API for event data management and retrieval according to different users | Provides standardized REST API endpoints that will enable access for different users based on user authentication levels, perform appropriate CRUD operations (such as creating, updating, viewing, or deleting event data).                                               |
-|                                                 | Search and filter events by timestamp, faculty, type and other related preferences. | Enables users to quickly locate specific events within the centralized database.                                                                                                                                                                                           |
-| Collaborative Engagement and Real-Time Insights | Via DigitalOcean Functions for Serverless notifications                             | Sending automated alerts/notifications when organizers create or update events, or reminding students or organizers when crucial events occur.                                                                                                                             |
-|                                                 | Integration with External Services for extra notifications                          | Integrate with external services (e.g., SendGrid API) to send automated RSVP confirmations and event reminders, enhancing the serverless notification workflow.<br>                                                                                                        |
-| Reliable State Management and Data Integrity    | Using PostgreSQL for event storage with persistent DigitalOcean volumes             | Stores all event information securely and ensures data durability across redeployments and restarts for long-term records.                                                                                                                                                 |
-|                                                 | User authentication and organization-based access                                   | Integrates secure authentication and manages role-based authorization for different users (e.g., department staff, organizers, and student users). Also, enforcing HTTPS encryption and secrets management to protect credentials, API keys, and sensitive configurations. |
-| Cloud-Native Deployment and Scalability         | Containerization and Local Development (Docker + Docker Compose)                    | Running the core services (e.g.Node.js backend, PostgreSQL database and Redis) in separate Docker containers. Using a Docker Compose file to manage the multi-container setup to maintain development and deployment consistency.                                          |
-|                                                 | Deployment on DigitalOcean using Docker Swarm for orchestration                     | Provides container orchestration, replication, and load balancing for scalable performance under high traffic.                                                                                                                                                             |
-| Observability and System Reliability            | Monitoring alerts for high event volume or system health                            | Tracks CPU, memory, API latency, and database load. Also monitoring alerts for unusual system behavior.                                                                                                                                                                    |
+**Key Features**
 
-**
+| Objective | Key Features / Implementation | Description |
+| ----- | ----- | ----- |
+| **Centralized Event Aggregation** | Using REST API for event data management and retrieval according to different users | Provides standardized REST API endpoints that will enable access for different users based on user authentication levels, perform appropriate CRUD operations (such as creating, updating, viewing, or deleting event data). |
+|  | Search and filter events by timestamp, faculty, type and other related preferences. | Enables users to quickly locate specific events within the centralized database. |
+| **Collaborative Engagement and Real-Time Insights** | Via DigitalOcean Functions for Serverless notifications  | Sending automated alerts/notifications when organizers create or update events, or reminding students or organizers when crucial events occur. |
+|  | Integration with External Services for extra notifications | Integrate with external services (e.g., SendGrid API) to send automated RSVP confirmations and event reminders, enhancing the serverless notification workflow.  |
+| **Reliable State Management and Data Integrity** | Using PostgreSQL for event storage with persistent DigitalOcean volumes | Stores all event information securely and ensures data durability across redeployments and restarts for long-term records. |
+|  | User authentication and organization-based access | Integrates secure authentication and manages role-based authorization for different users (e.g., department staff, organizers, and student users). Also, enforcing HTTPS encryption and secrets management to protect credentials, API keys, and sensitive configurations. |
+| **Cloud-Native Deployment and Scalability** | Containerization and Local Development (Docker \+ Docker Compose) | Running the core services (e.g.Node.js backend, PostgreSQL database and Redis) in separate Docker containers. Using a Docker Compose file to manage the multi-container setup to maintain development and deployment consistency. |
+|  | Deployment on DigitalOcean using Docker Swarm for orchestration | Provides container orchestration, replication, and load balancing for scalable performance under high traffic. |
+| **Observability and System Reliability** | Monitoring alerts for high event volume or system health | Tracks CPU, memory, API latency, and database load. Also monitoring alerts for unusual system behavior. |
+
 
 
 
