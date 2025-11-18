@@ -1,0 +1,71 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.network=traefik-public"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.le.acme.email=team@utoronto.ca"
+      - "--certificatesresolvers.le.acme.storage=/acme.json"
+      - "--certificatesresolvers.le.acme.httpchallenge=true"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - traefik_acme:/acme.json
+
+    networks:
+      - traefik-public
+      - backend-net
+
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager 
+      replicas: 1
+
+  backend:
+    image: yourdockerhub/uniconn-backend:latest
+    env_file:
+      - ../../.env
+    networks:
+      - backend-net
+    deploy:
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.backend.rule=Host(`api.uniconn.live`)"
+        - "traefik.http.routers.backend.entrypoints=websecure"
+        - "traefik.http.routers.backend.tls.certresolver=le"
+        - "traefik.http.services.backend.loadbalancer.server.port=3000"
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: uniconn
+      POSTGRES_PASSWORD: postgres 
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend-net
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+      replicas: 1
+
+networks:
+  traefik-public:
+  backend-net:
+
+volumes:
+  pgdata:
+  traefik_acme:
