@@ -1,71 +1,57 @@
-version: "3.8"
+version: "3.9"
 
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v2.10
     command:
-      - "--providers.docker.swarmMode=true"
-      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
-      - "--providers.docker.network=traefik-public"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.le.acme.email=team@utoronto.ca"
-      - "--certificatesresolvers.le.acme.storage=/acme.json"
-      - "--certificatesresolvers.le.acme.httpchallenge=true"
-      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
-
+      - "--api.dashboard=true"
     ports:
       - "80:80"
-      - "443:443"
-
+      - "8081:8080" # dashboard exposed on localhost:8081
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - traefik_acme:/acme.json
-
-    networks:
-      - traefik-public
-      - backend-net
-
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../../traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ../../traefik/dynamic:/etc/traefik/dynamic:ro
     deploy:
       placement:
         constraints:
-          - node.role == manager 
-      replicas: 1
+          - node.role == manager
 
-  backend:
-    image: yourdockerhub/uniconn-backend:latest
-    env_file:
-      - ../../.env
+  api:
+    image: uniconn-api:local
     networks:
-      - backend-net
+      - traefik-net
     deploy:
-      replicas: 2
+      replicas: 3
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.backend.rule=Host(`api.uniconn.live`)"
-        - "traefik.http.routers.backend.entrypoints=websecure"
-        - "traefik.http.routers.backend.tls.certresolver=le"
-        - "traefik.http.services.backend.loadbalancer.server.port=3000"
+        - "traefik.http.routers.uniconn.rule=Host(`localhost`)"
+        - "traefik.http.services.uniconn.loadbalancer.server.port=8080"
+    depends_on:
+      - db
 
   db:
-    image: postgres:16
+    image: postgres:16-alpine
     environment:
-      POSTGRES_DB: uniconn
-      POSTGRES_PASSWORD: postgres 
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - backend-net
+      - db-data:/var/lib/postgresql/data
     deploy:
       placement:
         constraints:
-          - node.role == worker
-      replicas: 1
+          - node.role == manager
+    networks:
+      - traefik-net
 
 networks:
-  traefik-public:
-  backend-net:
+  traefik-net:
+    driver: overlay
 
 volumes:
-  pgdata:
-  traefik_acme:
+  db-data:

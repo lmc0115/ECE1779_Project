@@ -1,5 +1,13 @@
 http:
-  middlewares:
-    redirect-to-https:
-      redirectScheme:
-        scheme: https
+  routers:
+    uniconn-api:
+      rule: "Host(`localhost`)"
+      service: uniconn-api-service
+      entryPoints:
+        - web
+
+  services:
+    uniconn-api-service:
+      loadBalancer:
+        servers:
+          - url: "http://uniconn-api:8080"
