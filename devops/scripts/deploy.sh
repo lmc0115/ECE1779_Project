@@ -15,9 +15,20 @@ echo "Ensuring traefik-public network exists..."
 docker network create --driver=overlay traefik-public || true
 
 echo "Deploying Traefik stack..."
-docker stack deploy -c devops/docker/swarm/traefik-stack.yaml traefik
+docker stack deploy -c devops/docker/swarm/traefik-stack.yml traefik
 
 sleep 5
+
+# Load environment variables from .env
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    echo "Loading environment variables from .env..."
+    set -a
+    source $PROJECT_ROOT/.env
+    set +a
+else
+    echo ".env file NOT FOUND. Deployment cancelled."
+    exit 1
+fi
 
 echo "Deploying UniConn API and database..."
 docker stack deploy -c devops/docker/swarm/docker-stack.yaml uniconn
@@ -31,4 +42,4 @@ docker service ls
 echo ""
 echo "Deployment finished."
 echo "You can test the API using: http://143.198.39.167/api/health"
-echo "Traefik dashboard is available at: http://YOUR_SERVER_IP:8080"
+echo "Traefik dashboard is available at: http://143.198.39.167:8080"
