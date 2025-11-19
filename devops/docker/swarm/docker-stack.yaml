@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+
+  api:
+    image: uniconn-api:latest
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.uniconn.rule=PathPrefix(`/api`)"
+        - "traefik.http.routers.uniconn.entrypoints=web"
+        - "traefik.http.middlewares.uniconn-strip.stripprefix.prefixes=/api"
+        - "traefik.http.routers.uniconn.middlewares=uniconn-strip"
+        - "traefik.http.services.uniconn.loadbalancer.server.port=8080"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - traefik-public   # MUST MATCH TRAEFIK STACK
+      - internal
+
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - internal
+
+
+networks:
+  traefik-public:
+    external: true
+  internal:
+    driver: overlay
+
+volumes:
+  db-data:

@@ -1,0 +1,52 @@
+Manager IP: 143.198.39.167
+Woker01-IP: 143.110.221.128
+ssh should be add to everyone
+
+For manager
+user: uniconn
+password: group11
+
+sudo nano /home/uniconn/.ssh/authorized_keys
+
+add your key 
+
+then 
+chmod 600 /home/uniconn/.ssh/authorized_keys
+chown uniconn:uniconn /home/uniconn/.ssh/authorized_keys
+
+chown -R uniconn:uniconn /home/uniconn
+usermod -aG sudo uniconn
+
+usually access by uniconn, but if necessary access by root: ssh root@143.198.39.167
+if creating new users, grant sudo access by usermod -aG sudo uniconn
+
+To install docker:
+1. ssh root@143.198.39.167
+2. apt update
+apt install -y ca-certificates curl gnupg
+3. install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+4. echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+5.apt update
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+6. docker --version
+
+After that:
+getent group docker, if seen docker:x:99x, success
+
+then: usermod -aG docker uniconn
+usermod -aG sudo uniconn
+
+
+To initialize docker(manager node):
+
+1. ssh uniconn@143.198.39.167
+2. docker swarm init --advertise-addr 143.198.39.167
+3. copy the note with docker swarm join --token SWMTKN-1-6an5taqak0ptizhogavaylztpswrog3e1n082p2wy23woyimpa-9zp8pa5lduiwpyep37c74gwrs 143.198.39.167:2377
+4. docker node ls
+
+For manager node, all deployments go to cd ~/uniconn-deploy
