@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   traefik:
-    image: traefik:v2.10
+    image: traefik:v2.11
     command:
       - "--providers.docker.swarmMode=true"
       - "--providers.docker.exposedByDefault=false"
@@ -13,7 +13,7 @@ services:
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/traefik/traefik.yaml
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
     deploy:
       placement:
         constraints:
