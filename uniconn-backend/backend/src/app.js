@@ -20,7 +20,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/events", commentsRoutes); // nested: /events/:eventId/comments
 app.use("/api/events", rsvpsRoutes);    // nested: /events/:eventId/rsvps
-app.use("/", healthRoutes);
+app.use("/api", healthRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });

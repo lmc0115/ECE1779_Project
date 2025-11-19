@@ -5,29 +5,22 @@ services:
     image: traefik:v2.10
     command:
       - "--providers.docker.swarmMode=true"
-      - "--providers.docker.watch=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--api.dashboard=true"
+      - "--providers.docker.exposedByDefault=false"
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
+      - "--api.dashboard=true"
     ports:
       - "80:80"
-      - "8081:8080"   # Dashboard
+      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/traefik/traefik.yaml
     deploy:
       placement:
         constraints:
           - node.role == manager
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.dashboard.rule=Host(`dashboard.localhost`)"
-        - "traefik.http.routers.dashboard.entrypoints=web"
-        - "traefik.http.routers.dashboard.service=api@internal"
-        - "traefik.http.services.api.loadbalancer.server.port=8080"
     networks:
-      - web
+      - traefik-public
 
 networks:
-  web:
+  traefik-public:
     external: true
