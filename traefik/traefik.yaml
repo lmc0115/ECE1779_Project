@@ -1,14 +1,13 @@
-log:
-  level: INFO
-
 api:
   dashboard: true
-
-providers:
-  docker:
-    swarmMode: true
-    exposedByDefault: false
+  insecure: true   # exposes http://IP:8080/dashboard
 
 entryPoints:
   web:
     address: ":80"
+
+providers:
+  docker:
+    swarmMode: true
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
