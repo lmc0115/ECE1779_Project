@@ -6,14 +6,29 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/prometh>
     deploy:
       placement:
         constraints:
           - node.role == manager
     networks:
       - uniconn_internal
-
+      - traefik-public
+  node-exporter:
+    image: prom/node-exporter:latest
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
+    ports:
+      - "9100:9100"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - uniconn_internal
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -24,8 +39,11 @@ services:
           - node.role == manager
     networks:
       - uniconn_internal
+      - traefik-public
 
 networks:
   uniconn_internal:
+    external: true
+  traefik-public:
     external: true
 
