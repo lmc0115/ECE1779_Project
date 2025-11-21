@@ -5,9 +5,17 @@ api:
 entryPoints:
   web:
     address: ":80"
+  traefik:
+    address: ":8080"
 
 providers:
   docker:
     swarmMode: true
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
+
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    entryPoint: "traefik"
