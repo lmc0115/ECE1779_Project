@@ -17,7 +17,7 @@ services:
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/traefik/traefik.yaml:/etc/traefik/trae>
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
     deploy:
       placement:
         constraints:
