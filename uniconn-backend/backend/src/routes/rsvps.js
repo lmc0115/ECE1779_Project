@@ -2,6 +2,7 @@ const express = require("express");
 const db = require("../db");
 const { authRequired } = require("../middleware/auth");
 const notificationService = require("../services/notificationService");
+const { broadcastRSVPUpdate } = require("../services/websocket");
 
 const router = express.Router({ mergeParams: true });
 
@@ -44,6 +45,9 @@ router.post("/:eventId/rsvps", authRequired, async (req, res) => {
       user_id: req.user.id,
       status: status
     }).catch(console.error);
+
+    // broadcast real-time update
+    broadcastRSVPUpdate(result.rows[0], eventId);
 
     res.status(201).json({ rsvp: result.rows[0] });
   } catch (err) {

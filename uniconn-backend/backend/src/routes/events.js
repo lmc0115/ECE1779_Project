@@ -2,6 +2,7 @@ const express = require("express");
 const db = require("../db");
 const { authRequired, requireRole } = require("../middleware/auth");
 const notificationService = require("../services/notificationService");
+const { broadcastEventCreated, broadcastEventUpdated, broadcastEventDeleted } = require("../services/websocket");
 
 const router = express.Router();
 
@@ -100,6 +101,9 @@ router.post("/", authRequired, requireRole("organizer", "admin"), async (req, re
     // fire-and-forget notification
     notificationService.notifyEventCreated(result.rows[0]).catch(console.error);
 
+    // broadcast real-time update
+    broadcastEventCreated(result.rows[0]);
+
     res.status(201).json({ event: result.rows[0] });
   } catch (err) {
     console.error(err);
@@ -151,6 +155,10 @@ router.put("/:id", authRequired, requireRole("organizer", "admin"), async (req, 
     if (!result.rows[0]) return res.status(404).json({ error: "Not found" });
 
     notificationService.notifyEventUpdated(result.rows[0]).catch(console.error);
+    
+    // broadcast real-time update
+    broadcastEventUpdated(result.rows[0]);
+    
     res.json({ event: result.rows[0] });
   } catch (err) {
     console.error(err);
@@ -173,6 +181,10 @@ router.delete("/:id", authRequired, requireRole("organizer", "admin"), async (re
       }
     }
     await db.query("DELETE FROM events WHERE id=$1", [id]);
+    
+    // broadcast real-time update
+    broadcastEventDeleted(id);
+    
     res.status(204).send();
   } catch (err) {
     console.error(err);
