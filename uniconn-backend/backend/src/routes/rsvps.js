@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const { authRequired } = require("../middleware/auth");
+const notificationService = require("../services/notificationService");
 
 const router = express.Router({ mergeParams: true });
 
@@ -36,6 +37,13 @@ router.post("/:eventId/rsvps", authRequired, async (req, res) => {
        RETURNING id,event_id,user_id,status,created_at`,
       [eventId, req.user.id, status]
     );
+
+    // fire-and-forget notification
+    notificationService.notifyRSVPConfirmation({
+      event_id: eventId,
+      user_id: req.user.id,
+      status: status
+    }).catch(console.error);
 
     res.status(201).json({ rsvp: result.rows[0] });
   } catch (err) {
