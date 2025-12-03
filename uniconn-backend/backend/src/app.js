@@ -11,7 +11,17 @@ const healthRoutes = require("./routes/health");
 
 const app = express();
 
-app.use(helmet());
+// Configure Helmet with CSP that allows Socket.IO CDN
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.socket.io"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+      styleSrc: ["'self'", "'unsafe-inline'"]
+    }
+  }
+}));
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
