@@ -40,6 +40,19 @@ services:
     networks:
       - uniconn_internal
       - traefik-public
+  monitoring-frontend:
+    build:
+      context: ./monitoring/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - uniconn_internal
+      - traefik-public
 
 networks:
   uniconn_internal:
