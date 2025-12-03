@@ -11,25 +11,16 @@ const healthRoutes = require("./routes/health");
 
 const app = express();
 
-// Configure Helmet with CSP that allows Socket.IO CDN
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://cdn.socket.io"],
-      connectSrc: ["'self'", "ws:", "wss:"],
-      styleSrc: ["'self'", "'unsafe-inline'"]
-    }
-  }
-}));
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
 app.use("/api/auth", authRoutes);
-app.use("/api/events", eventRoutes);
+// Mount nested routes first (more specific routes before general ones)
 app.use("/api/events", commentsRoutes); // nested: /events/:eventId/comments
 app.use("/api/events", rsvpsRoutes);    // nested: /events/:eventId/rsvps
+app.use("/api/events", eventRoutes);    // general: /events/:id (must be last)
 app.use("/api", healthRoutes);
 
 app.use((req, res) => {
