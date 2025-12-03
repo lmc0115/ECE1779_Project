@@ -6,7 +6,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/prometh>
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     deploy:
       placement:
         constraints:
@@ -33,19 +33,6 @@ services:
     image: grafana/grafana:latest
     ports:
       - "3000:3000"
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-    networks:
-      - uniconn_internal
-      - traefik-public
-  monitoring-frontend:
-    build:
-      context: ./monitoring/frontend
-      dockerfile: Dockerfile
-    ports:
-      - "8080:80"
     deploy:
       placement:
         constraints:
