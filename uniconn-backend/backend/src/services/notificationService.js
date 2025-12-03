@@ -7,17 +7,6 @@ if (config.sendgrid.apiKey) {
   sgMail.setApiKey(config.sendgrid.apiKey);
 }
 
-// Helper: Get user email by user_id
-async function getUserEmail(userId) {
-  try {
-    const result = await db.query("SELECT email, name FROM users WHERE id=$1", [userId]);
-    return result.rows[0] || null;
-  } catch (err) {
-    console.error("[notification] Error fetching user email:", err);
-    return null;
-  }
-}
-
 // Helper: Get event details with organizer info
 async function getEventDetails(eventId) {
   try {
@@ -32,6 +21,16 @@ async function getEventDetails(eventId) {
   } catch (err) {
     console.error("[notification] Error fetching event details:", err);
     return null;
+  }
+}
+
+// Helper: Format date safely
+function formatDate(dateString) {
+  if (!dateString) return "TBD";
+  try {
+    return new Date(dateString).toLocaleString();
+  } catch (err) {
+    return dateString;
   }
 }
 
@@ -60,71 +59,105 @@ async function sendEmail(to, subject, htmlContent) {
 }
 
 async function notifyEventCreated(event) {
-  console.log(`[notification] Event created: ${event.title} (#${event.id})`);
-  
-  // Get full event details with organizer info
-  const eventDetails = await getEventDetails(event.id);
-  if (!eventDetails) return;
+  // Early exit if SendGrid is not configured
+  if (!config.sendgrid.apiKey) {
+    console.log(`[notification] Event created: ${event.title} (#${event.id}) - SendGrid not configured`);
+    return;
+  }
 
-  // Format event date/time
-  const startTime = new Date(eventDetails.start_time).toLocaleString();
-  const endTime = eventDetails.end_time 
-    ? new Date(eventDetails.end_time).toLocaleString() 
-    : "TBD";
+  try {
+    // Get full event details with organizer info
+    const eventDetails = await getEventDetails(event.id);
+    if (!eventDetails || !eventDetails.organizer_email) {
+      console.error(`[notification] Cannot send event creation email: event ${event.id} or organizer email not found`);
+      return;
+    }
 
-  const htmlContent = `
-    <h2>New Event: ${eventDetails.title}</h2>
-    <p><strong>Organizer:</strong> ${eventDetails.organizer_name}</p>
-    <p><strong>Description:</strong> ${eventDetails.description || "N/A"}</p>
-    <p><strong>Location:</strong> ${eventDetails.location || "TBD"}</p>
-    <p><strong>Start Time:</strong> ${startTime}</p>
-    <p><strong>End Time:</strong> ${endTime}</p>
-    <p><strong>Faculty:</strong> ${eventDetails.faculty || "N/A"}</p>
-    <p><strong>Category:</strong> ${eventDetails.category || "N/A"}</p>
-  `;
+    // Format event date/time safely
+    const startTime = formatDate(eventDetails.start_time);
+    const endTime = formatDate(eventDetails.end_time);
 
-  // Note: In a real system, you might want to notify all users or subscribed users
-  // For now, we just log it. You can extend this to send to a mailing list.
-  console.log(`[notification] Event created notification prepared for: ${eventDetails.title}`);
+    const htmlContent = `
+      <h2>Event Created Successfully: ${eventDetails.title}</h2>
+      <p>Your event has been created and is now visible to users.</p>
+      <h3>Event Details:</h3>
+      <p><strong>Title:</strong> ${eventDetails.title}</p>
+      <p><strong>Description:</strong> ${eventDetails.description || "N/A"}</p>
+      <p><strong>Location:</strong> ${eventDetails.location || "TBD"}</p>
+      <p><strong>Start Time:</strong> ${startTime}</p>
+      <p><strong>End Time:</strong> ${endTime}</p>
+      <p><strong>Faculty:</strong> ${eventDetails.faculty || "N/A"}</p>
+      <p><strong>Category:</strong> ${eventDetails.category || "N/A"}</p>
+      <p>Thank you for using UniConn!</p>
+    `;
+
+    await sendEmail(
+      eventDetails.organizer_email,
+      `Event Created: ${eventDetails.title}`,
+      htmlContent
+    );
+  } catch (err) {
+    console.error("[notification] Error in notifyEventCreated:", err);
+  }
 }
 
 async function notifyEventUpdated(event) {
-  console.log(`[notification] Event updated: ${event.title} (#${event.id})`);
-  
-  // Get full event details
-  const eventDetails = await getEventDetails(event.id);
-  if (!eventDetails) return;
+  // Early exit if SendGrid is not configured
+  if (!config.sendgrid.apiKey) {
+    console.log(`[notification] Event updated: ${event.title} (#${event.id}) - SendGrid not configured`);
+    return;
+  }
 
-  // Format event date/time
-  const startTime = new Date(eventDetails.start_time).toLocaleString();
-  const endTime = eventDetails.end_time 
-    ? new Date(eventDetails.end_time).toLocaleString() 
-    : "TBD";
+  try {
+    // Get full event details with organizer info
+    const eventDetails = await getEventDetails(event.id);
+    if (!eventDetails || !eventDetails.organizer_email) {
+      console.error(`[notification] Cannot send event update email: event ${event.id} or organizer email not found`);
+      return;
+    }
 
-  const htmlContent = `
-    <h2>Event Updated: ${eventDetails.title}</h2>
-    <p>The event details have been updated.</p>
-    <p><strong>Organizer:</strong> ${eventDetails.organizer_name}</p>
-    <p><strong>Description:</strong> ${eventDetails.description || "N/A"}</p>
-    <p><strong>Location:</strong> ${eventDetails.location || "TBD"}</p>
-    <p><strong>Start Time:</strong> ${startTime}</p>
-    <p><strong>End Time:</strong> ${endTime}</p>
-    <p><strong>Faculty:</strong> ${eventDetails.faculty || "N/A"}</p>
-    <p><strong>Category:</strong> ${eventDetails.category || "N/A"}</p>
-  `;
+    // Format event date/time safely
+    const startTime = formatDate(eventDetails.start_time);
+    const endTime = formatDate(eventDetails.end_time);
 
-  // Note: In a real system, notify all RSVP'd users
-  // For now, we just log it.
-  console.log(`[notification] Event updated notification prepared for: ${eventDetails.title}`);
+    const htmlContent = `
+      <h2>Event Updated: ${eventDetails.title}</h2>
+      <p>Your event details have been updated.</p>
+      <h3>Updated Event Details:</h3>
+      <p><strong>Title:</strong> ${eventDetails.title}</p>
+      <p><strong>Description:</strong> ${eventDetails.description || "N/A"}</p>
+      <p><strong>Location:</strong> ${eventDetails.location || "TBD"}</p>
+      <p><strong>Start Time:</strong> ${startTime}</p>
+      <p><strong>End Time:</strong> ${endTime}</p>
+      <p><strong>Faculty:</strong> ${eventDetails.faculty || "N/A"}</p>
+      <p><strong>Category:</strong> ${eventDetails.category || "N/A"}</p>
+      <p>Thank you for using UniConn!</p>
+    `;
+
+    await sendEmail(
+      eventDetails.organizer_email,
+      `Event Updated: ${eventDetails.title}`,
+      htmlContent
+    );
+  } catch (err) {
+    console.error("[notification] Error in notifyEventUpdated:", err);
+  }
 }
 
 async function notifyRSVPConfirmation(rsvpData) {
   // rsvpData should contain: { event_id, user_id, status }
   const { event_id, user_id, status } = rsvpData;
 
+  // Early exit if SendGrid is not configured
+  if (!config.sendgrid.apiKey) {
+    console.log(`[notification] RSVP confirmation skipped - SendGrid not configured`);
+    return;
+  }
+
   try {
     // Get user email
-    const user = await getUserEmail(user_id);
+    const userResult = await db.query("SELECT email, name FROM users WHERE id=$1", [user_id]);
+    const user = userResult.rows[0];
     if (!user || !user.email) {
       console.error(`[notification] Cannot send RSVP confirmation: user ${user_id} not found`);
       return;
@@ -137,11 +170,9 @@ async function notifyRSVPConfirmation(rsvpData) {
       return;
     }
 
-    // Format event date/time
-    const startTime = new Date(event.start_time).toLocaleString();
-    const endTime = event.end_time 
-      ? new Date(event.end_time).toLocaleString() 
-      : "TBD";
+    // Format event date/time safely
+    const startTime = formatDate(event.start_time);
+    const endTime = formatDate(event.end_time);
 
     // Determine status message
     let statusMessage = "";
