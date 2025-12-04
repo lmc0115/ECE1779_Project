@@ -13,7 +13,7 @@ scrape_configs:
   - job_name: "uniconn_api"
     metrics_path: "/metrics"
     static_configs:
-      - targets: ["api:3000"]
+      - targets: ["api:8080"]
 
   - job_name: "node-exporter"
     static_configs:

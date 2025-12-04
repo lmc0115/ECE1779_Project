@@ -51,8 +51,9 @@ function formatDate(dateString) {
 // Helper: Send email via SendGrid
 async function sendEmail(to, subject, htmlContent) {
   if (!config.sendgrid.apiKey) {
-    console.log(`[notification] SendGrid not configured. Would send to ${to}: ${subject}`);
-    return;
+    return console.log(
+      `[notification] (SIMULATED) Would send to ${to}: ${subject}`
+    );
   }
 
   try {

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniConn WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            background-color: white;
+        }
+        .log-entry.success {
+            border-left-color: #28a745;
+        }
+        .log-entry.error {
+            border-left-color: #dc3545;
+        }
+        .log-entry.info {
+            border-left-color: #17a2b8;
+        }
+        .api-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .api-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔌 UniConn WebSocket & API Test</h1>
+    
+    <div class="container">
+        <h2>WebSocket Connection</h2>
+        <div id="wsStatus" class="status disconnected">Disconnected</div>
+        <button id="connectBtn" onclick="connectWebSocket()">Connect</button>
+        <button id="disconnectBtn" onclick="disconnectWebSocket()" disabled>Disconnect</button>
+        <button onclick="clearLog()">Clear Log</button>
+        <p><strong>Socket ID:</strong> <span id="socketId">-</span></p>
+    </div>
+
+    <div class="container">
+        <h2>Event Room Management</h2>
+        <input type="number" id="eventIdInput" placeholder="Event ID" value="1">
+        <button onclick="joinEventRoom()">Join Event Room</button>
+        <button onclick="leaveEventRoom()">Leave Event Room</button>
+    </div>
+
+    <div class="container api-section">
+        <div>
+            <h2>API Testing</h2>
+            <h3>Authentication</h3>
+            <input type="text" id="emailInput" placeholder="Email" value="test@example.com">
+            <input type="password" id="passwordInput" placeholder="Password" value="test123456">
+            <button onclick="register()">Register</button>
+            <button onclick="login()">Login</button>
+            <p><strong>Token:</strong> <span id="tokenDisplay" style="word-break: break-all;">Not logged in</span></p>
+        </div>
+        <div>
+            <h3>Event Actions</h3>
+            <input type="number" id="eventIdForAction" placeholder="Event ID" value="1">
+            <button onclick="getEvent()">Get Event</button>
+            <button onclick="createEvent()">Create Event</button>
+            <button onclick="updateEvent()">Update Event</button>
+        </div>
+    </div>
+
+    <div class="container api-section">
+        <div>
+            <h3>RSVP Actions</h3>
+            <input type="number" id="rsvpEventId" placeholder="Event ID" value="1">
+            <select id="rsvpStatus">
+                <option value="going">Going</option>
+                <option value="interested">Interested</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <button onclick="createRSVP()">Create/Update RSVP</button>
+        </div>
+        <div>
+            <h3>Comment Actions</h3>
+            <input type="number" id="commentEventId" placeholder="Event ID" value="1">
+            <textarea id="commentBody" placeholder="Comment text" rows="3">Test comment from WebSocket test page</textarea>
+            <button onclick="window.createComment()">Create Comment</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Real-Time Event Log</h2>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let authToken = localStorage.getItem('authToken') || '';
+        if (authToken) {
+            document.getElementById('tokenDisplay').textContent = authToken.substring(0, 50) + '...';
+        }
+
+        const API_BASE = 'http://localhost:8080/api';
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function connectWebSocket() {
+            if (socket && socket.connected) {
+                log('Already connected!', 'info');
+                return;
+            }
+
+            log('Connecting to WebSocket server...', 'info');
+            socket = io('http://localhost:8080', {
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', () => {
+                log('✅ Connected to WebSocket server!', 'success');
+                document.getElementById('wsStatus').textContent = 'Connected';
+                document.getElementById('wsStatus').className = 'status connected';
+                document.getElementById('socketId').textContent = socket.id;
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+            });
+
+            socket.on('disconnect', () => {
+                log('⚠️ Disconnected from WebSocket server', 'error');
+                document.getElementById('wsStatus').textContent = 'Disconnected';
+                document.getElementById('wsStatus').className = 'status disconnected';
+                document.getElementById('socketId').textContent = '-';
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`❌ Connection error: ${error.message}`, 'error');
+            });
+
+            // Listen for real-time events
+            socket.on('event:created', (data) => {
+                log(`📢 EVENT CREATED: ${JSON.stringify(data, null, 2)}`, 'success');
+            });
+
+            socket.on('event:updated', (data) => {
+                log(`📢 EVENT UPDATED: ${JSON.stringify(data, null, 2)}`, 'success');
+            });
+
+            socket.on('event:deleted', (data) => {
+                log(`📢 EVENT DELETED: ${JSON.stringify(data, null, 2)}`, 'info');
+            });
+
+            socket.on('rsvp:updated', (data) => {
+                log(`📢 RSVP UPDATED: ${JSON.stringify(data, null, 2)}`, 'success');
+            });
+
+            socket.on('comment:created', (data) => {
+                log(`📢 COMMENT CREATED: ${JSON.stringify(data, null, 2)}`, 'success');
+            });
+        }
+
+        function disconnectWebSocket() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        }
+
+        function joinEventRoom() {
+            const eventId = document.getElementById('eventIdInput').value;
+            if (socket && socket.connected) {
+                socket.emit('join-event', parseInt(eventId));
+                log(`Joined event room: ${eventId}`, 'info');
+            } else {
+                log('Please connect to WebSocket first!', 'error');
+            }
+        }
+
+        function leaveEventRoom() {
+            const eventId = document.getElementById('eventIdInput').value;
+            if (socket && socket.connected) {
+                socket.emit('leave-event', parseInt(eventId));
+                log(`Left event room: ${eventId}`, 'info');
+            } else {
+                log('Please connect to WebSocket first!', 'error');
+            }
+        }
+
+        async function register() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        name: 'Test User',
+                        role: 'student'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    document.getElementById('tokenDisplay').textContent = authToken.substring(0, 50) + '...';
+                    log(`✅ Registered successfully! Token saved.`, 'success');
+                } else {
+                    log(`❌ Registration failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    document.getElementById('tokenDisplay').textContent = authToken.substring(0, 50) + '...';
+                    log(`✅ Logged in successfully! Token saved.`, 'success');
+                } else {
+                    log(`❌ Login failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getEvent() {
+            const eventId = document.getElementById('eventIdForAction').value;
+            try {
+                const response = await fetch(`${API_BASE}/events/${eventId}`);
+                const data = await response.json();
+                log(`Event: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function createEvent() {
+            if (!authToken) {
+                log('❌ Please login first!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title: 'Test Event ' + new Date().toLocaleTimeString(),
+                        description: 'Created from WebSocket test page',
+                        location: 'Test Location',
+                        faculty: 'Engineering',
+                        category: 'test',
+                        start_time: new Date(Date.now() + 86400000).toISOString(),
+                        end_time: new Date(Date.now() + 90000000).toISOString()
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    log(`✅ Event created: ${JSON.stringify(data, null, 2)}`, 'success');
+                    log('📢 Check WebSocket log above for real-time event:created message!', 'info');
+                } else {
+                    log(`❌ Failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function updateEvent() {
+            if (!authToken) {
+                log('❌ Please login first!', 'error');
+                return;
+            }
+            
+            const eventId = document.getElementById('eventIdForAction').value;
+            try {
+                const response = await fetch(`${API_BASE}/events/${eventId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title: 'Updated Event ' + new Date().toLocaleTimeString(),
+                        description: 'Updated from WebSocket test page',
+                        location: 'Updated Location',
+                        faculty: 'Engineering',
+                        category: 'test',
+                        start_time: new Date(Date.now() + 86400000).toISOString(),
+                        end_time: new Date(Date.now() + 90000000).toISOString()
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    log(`✅ Event updated: ${JSON.stringify(data, null, 2)}`, 'success');
+                    log('📢 Check WebSocket log above for real-time event:updated message!', 'info');
+                } else {
+                    log(`❌ Failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function createRSVP() {
+            if (!authToken) {
+                log('❌ Please login first!', 'error');
+                return;
+            }
+            
+            const eventId = document.getElementById('rsvpEventId').value;
+            const status = document.getElementById('rsvpStatus').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/events/${eventId}/rsvps`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    log(`✅ RSVP created: ${JSON.stringify(data, null, 2)}`, 'success');
+                    log('📢 Check WebSocket log above for real-time rsvp:updated message!', 'info');
+                } else {
+                    log(`❌ Failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function createComment() {
+            log('🔵 createComment() function called', 'info');
+            
+            if (!authToken) {
+                log('❌ Please login first!', 'error');
+                return;
+            }
+            
+            const eventId = document.getElementById('commentEventId').value;
+            const body = document.getElementById('commentBody').value;
+            
+            log(`Event ID: ${eventId}, Body: ${body}`, 'info');
+            
+            if (!body || body.trim() === '') {
+                log('❌ Comment body cannot be empty!', 'error');
+                return;
+            }
+            
+            const url = `${API_BASE}/events/${eventId}/comments`;
+            log(`🔵 Sending POST request to: ${url}`, 'info');
+            log(`🔵 Request body: ${JSON.stringify({ body })}`, 'info');
+            log(`🔵 Authorization header: Bearer ${authToken.substring(0, 20)}...`, 'info');
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ body })
+                });
+                
+                log(`🔵 Response received. Status: ${response.status}`, 'info');
+                
+                if (!response.ok && response.status !== 201) {
+                    const errorText = await response.text();
+                    log(`❌ Response error: ${errorText}`, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                if (response.ok || response.status === 201) {
+                    log(`✅ Comment created: ${JSON.stringify(data, null, 2)}`, 'success');
+                    log('📢 Check WebSocket log above for real-time comment:created message!', 'info');
+                } else {
+                    log(`❌ Failed: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Fetch error: ${error.message}`, 'error');
+                if (error.stack) {
+                    log(`❌ Stack: ${error.stack}`, 'error');
+                }
+            }
+        }
+
+        // Auto-connect on page load
+        window.onload = () => {
+            log('Page loaded. Click "Connect" to start WebSocket connection.', 'info');
+        };
+    </script>
+</body>
+</html>
+

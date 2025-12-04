@@ -17,9 +17,10 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.use("/api/auth", authRoutes);
-app.use("/api/events", eventRoutes);
+// Mount nested routes first (more specific routes before general ones)
 app.use("/api/events", commentsRoutes); // nested: /events/:eventId/comments
 app.use("/api/events", rsvpsRoutes);    // nested: /events/:eventId/rsvps
+app.use("/api/events", eventRoutes);    // general: /events/:id (must be last)
 app.use("/api", healthRoutes);
 
 app.use((req, res) => {
