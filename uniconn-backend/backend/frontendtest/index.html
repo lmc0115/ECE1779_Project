@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>UniConn Real-Time Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- LOGIN PAGE -->
+<div id="login_page" class="flex items-center justify-center min-h-screen">
+  <div class="bg-white shadow-xl rounded-xl p-10 w-full max-w-md">
+    <h1 class="text-3xl font-semibold text-center mb-6">UniConn Login</h1>
+
+    <p id="login_error" class="text-red-600 text-center mb-4 hidden"></p>
+
+    <div class="space-y-4">
+      <input id="login_email" class="w-full p-3 border rounded-lg" placeholder="Email" />
+      <input id="login_password" type="password" class="w-full p-3 border rounded-lg" placeholder="Password" />
+    </div>
+
+    <button onclick="login()" 
+      class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow">
+      Login
+    </button>
+
+    <button onclick="showPage('register_page')" 
+      class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg shadow">
+      Create an Account
+    </button>
+  </div>
+</div>
+
+
+
+<!-- REGISTRATION PAGE -->
+<div id="register_page" class="hidden flex items-center justify-center min-h-screen">
+  <div class="bg-white shadow-xl rounded-xl p-10 w-full max-w-md">
+    <h1 class="text-3xl font-semibold text-center mb-6">Create Account</h1>
+
+    <p id="register_error" class="text-red-600 text-center mb-4 hidden"></p>
+
+    <div class="space-y-4">
+      <input id="reg_name" class="w-full p-3 border rounded-lg" placeholder="Full Name" />
+      <input id="reg_email" class="w-full p-3 border rounded-lg" placeholder="Email" />
+      <input id="reg_password" type="password" class="w-full p-3 border rounded-lg" placeholder="Password" />
+
+      <select id="reg_role" class="w-full p-3 border rounded-lg bg-white">
+        <option value="student">Student</option>
+        <option value="organizer">Organizer</option>
+      </select>
+    </div>
+
+    <button onclick="register()" 
+      class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg shadow">
+      Register
+    </button>
+
+    <button onclick="showPage('login_page')" 
+      class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg shadow">
+      Back to Login
+    </button>
+  </div>
+</div>
+
+
+
+<!-- STUDENT DASHBOARD -->
+<div id="student_page" class="hidden p-6 max-w-6xl mx-auto">
+
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-3xl font-semibold">Student Dashboard</h2>
+    <button onclick="logout()" class="text-red-500 hover:text-red-700">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mb-4 border-b">
+    <nav class="-mb-px flex space-x-8" id="student_tabs">
+      <button onclick="setStudentTab('browse')" id="student_browse_btn" class="tab-btn border-b-2 border-blue-600 text-blue-600">Browse Events</button>
+      <button onclick="setStudentTab('live_events')" id="student_live_events_btn" class="tab-btn">Live Event Updates</button>
+      <button onclick="setStudentTab('live_comments')" id="student_live_comments_btn" class="tab-btn">Live Comments</button>
+      <button onclick="setStudentTab('live_rsvps')" id="student_live_rsvps_btn" class="tab-btn">Live RSVPs</button>
+    </nav>
+  </div>
+
+  <!-- Panels -->
+  <div id="student_browse" class="tab-panel bg-white p-6 rounded-xl shadow mb-6">
+    <!-- Student event list container -->
+    <div id="student_event_list"></div>
+  </div>
+
+  <div id="student_live_events" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+  <div id="student_live_comments" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+  <div id="student_live_rsvps" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+</div>
+
+
+
+<!-- ORGANIZER DASHBOARD -->
+<div id="organizer_page" class="hidden p-6 max-w-6xl mx-auto">
+
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-3xl font-semibold">Organizer Dashboard</h2>
+    <button onclick="logout()" class="text-red-500 hover:text-red-700">Logout</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mb-4 border-b">
+    <nav class="-mb-px flex space-x-8" id="organizer_tabs">
+
+      <button onclick="setOrganizerTab('browse')" id="organizer_browse_btn" class="tab-btn border-b-2 border-blue-600 text-blue-600">Browse Events</button>
+
+      <button onclick="setOrganizerTab('my_events')" id="organizer_my_events_btn" class="tab-btn">My Events</button>
+
+      <button onclick="setOrganizerTab('live_events')" id="organizer_live_events_btn" class="tab-btn">Live Event Updates</button>
+
+      <button onclick="setOrganizerTab('live_comments')" id="organizer_live_comments_btn" class="tab-btn">Live Comments</button>
+
+      <button onclick="setOrganizerTab('live_rsvps')" id="organizer_live_rsvps_btn" class="tab-btn">Live RSVPs</button>
+
+      <button onclick="setOrganizerTab('analytics')" id="organizer_analytics_btn" class="tab-btn">Analytics Dashboard</button>
+
+    </nav>
+  </div>
+
+  <!-- Panels -->
+  <div id="organizer_browse" class="tab-panel bg-white p-6 rounded-xl shadow mb-6">
+    <h3 class="text-2xl font-semibold mb-4">Browse Events</h3>
+
+    <!-- Organizer event list container -->
+    <div id="organizer_event_list"></div>
+  </div>
+
+  <div id="organizer_my_events" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-2xl font-semibold">My Events</h3>
+
+      <button onclick="openCreateEventModal()" 
+        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow">
+        + Create Event
+      </button>
+    </div>
+
+    <div id="my_events_list"></div>
+  </div>
+
+  <div id="organizer_live_events" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+  <div id="organizer_live_comments" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+  <div id="organizer_live_rsvps" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+  <div id="organizer_analytics" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+</div>
+
+
+
+<!-- EVENT DETAIL PAGE -->
+<div id="event_detail_page" class="hidden p-6 max-w-4xl mx-auto">
+  <button onclick="backToPreviousPage()" class="text-blue-600 hover:underline mb-4">&larr; Back</button>
+  <div id="event_detail_content" class="bg-white shadow rounded-xl p-8"></div>
+    <!-- CHAT PANEL -->
+    <div id="event_chat_panel" class="hidden mt-6 bg-white shadow rounded-xl p-6">
+    <h3 class="text-2xl font-semibold mb-4">Event Chat</h3>
+
+    <div id="chat_messages" 
+        class="h-64 overflow-y-auto border rounded p-3 bg-gray-50 mb-3 text-sm">
+    </div>
+
+    <div id="chat_typing" class="text-gray-500 text-xs mb-2 hidden"></div>
+
+    <div class="flex space-x-2">
+        <input id="chat_input"
+            class="flex-grow border rounded px-3 py-2"
+            placeholder="Type a message..."
+            oninput="handleTyping()" />
+
+        <button onclick="sendChatMessage()"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+        Send
+        </button>
+    </div>
+    </div>
+
+</div>
+
+
+
+<!-- CREATE EVENT MODAL -->
+<div id="create_event_modal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+  <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg relative">
+
+    <h2 class="text-2xl font-bold mb-4">Create New Event</h2>
+
+    <p id="create_event_error" class="text-red-600 mb-4 hidden"></p>
+
+    <div class="space-y-3">
+      <input id="ce_title" class="input" placeholder="Event Title">
+      <textarea id="ce_description" class="input" placeholder="Event Description"></textarea>
+      <input id="ce_location" class="input" placeholder="Location">
+
+      <input id="ce_faculty" class="input" placeholder="Faculty (e.g. Engineering)">
+      <input id="ce_category" class="input" placeholder="Category (e.g. Workshop)">
+
+      <label class="block text-gray-700">Start Time</label>
+      <input id="ce_start" class="input" type="datetime-local">
+
+      <label class="block text-gray-700">End Time</label>
+      <input id="ce_end" class="input" type="datetime-local">
+    </div>
+
+    <div class="flex justify-end mt-6 space-x-3">
+      <button onclick="closeCreateEventModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      <button onclick="submitCreateEvent()" class="px-4 py-2 bg-blue-600 text-white rounded">Create Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE EVENT MODAL -->
+<div id="update_event_modal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+  <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg relative">
+
+    <h2 class="text-2xl font-bold mb-4">Edit Event</h2>
+
+    <p id="update_event_error" class="text-red-600 mb-4 hidden"></p>
+
+    <div class="space-y-3">
+      <input id="ue_title" class="input" placeholder="Event Title">
+      <textarea id="ue_description" class="input" placeholder="Event Description"></textarea>
+      <input id="ue_location" class="input" placeholder="Location">
+
+      <input id="ue_faculty" class="input" placeholder="Faculty (e.g. Engineering)">
+      <input id="ue_category" class="input" placeholder="Category (e.g. Workshop)">
+
+      <label class="block text-gray-700">Start Time</label>
+      <input id="ue_start" class="input" type="datetime-local">
+
+      <label class="block text-gray-700">End Time</label>
+      <input id="ue_end" class="input" type="datetime-local">
+    </div>
+
+    <div class="flex justify-end mt-6 space-x-3">
+      <button onclick="closeUpdateEventModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+      <button onclick="submitUpdateEvent()" class="px-4 py-2 bg-blue-600 text-white rounded">
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Tailwind helper -->
+<style>
+.input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+.tab-btn {
+  padding: 12px 4px;
+  font-size: 1rem;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+}
+.tab-btn:hover { color: #1f2937; }
+.tab-panel { min-height: 200px; }
+</style>
+
+<script src="./dashboard.js"></script>
+
+</body>
+</html>

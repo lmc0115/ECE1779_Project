@@ -5,3 +5,16 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+  - job_name: "traefik"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["traefik:8080"]
+
+  - job_name: "uniconn_api"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["api:8080"]
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]

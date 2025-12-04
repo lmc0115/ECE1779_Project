@@ -35,6 +35,9 @@ router.post("/register", async (req, res) => {
       [email, hash, name, role]
     );
     const user = result.rows[0];
+    require("../services/notificationService")
+      .notifyUserRegistered(user)
+      .catch(console.error);
     const token = signToken(user);
     res.status(201).json({ user, token });
   } catch (err) {
