@@ -11,17 +11,47 @@ let socket = null;
 let previousPage = null;
 let editingEventId = null;
 
+let currentEventRoom = null;
+let typingTimeout = null;
+
+
 
 // =========================================================
 // PAGE SWITCHING
 // =========================================================
 function showPage(id) {
-  document
-    .querySelectorAll("#login_page, #register_page, #student_page, #organizer_page, #event_detail_page")
-    .forEach(el => el.classList.add("hidden"));
+  const pages = ["login_page", "register_page", "student_page", "organizer_page", "event_detail_page"];
 
-  document.getElementById(id).classList.remove("hidden");
+  pages.forEach(p => {
+    const el = document.getElementById(p);
+    if (el) el.classList.add("hidden");
+  });
+
+  // maybe event_chat_panel is not loaded yet
+  const chatPanel = document.getElementById("event_chat_panel");
+  if (chatPanel && id !== "event_detail_page") {
+    chatPanel.classList.add("hidden");
+  }
+
+  const active = document.getElementById(id);
+  if (active) active.classList.remove("hidden");
 }
+
+
+
+
+// =========================================================
+// LOGOUT — HARD RESET TO LOGIN PAGE
+// =========================================================
+function logout() {
+  token = "";
+  user = null;
+  socket?.disconnect();
+  socket = null;
+
+  showPage("login_page");
+}
+
 
 
 // =========================================================
@@ -63,6 +93,7 @@ async function login() {
 }
 
 
+
 // =========================================================
 // REGISTER
 // =========================================================
@@ -84,6 +115,8 @@ async function register() {
     return;
   }
 
+  alert("Account Created Successfully! Check your email for confirmation!")
+
   token = res.token;
   user = res.user;
 
@@ -94,6 +127,7 @@ async function register() {
 
   renderInitialPanels();
 }
+
 
 
 // =========================================================
@@ -116,6 +150,7 @@ function setStudentTab(id) {
 }
 
 
+
 // =========================================================
 // ORGANIZER TABS
 // =========================================================
@@ -135,6 +170,7 @@ function setOrganizerTab(id) {
   if (id === "browse") loadEventsList("organizer");
   if (id === "my_events") loadMyEventsList();
 }
+
 
 
 // =========================================================
@@ -163,48 +199,30 @@ function renderInitialPanels() {
 }
 
 
+
 // =========================================================
 // LOAD EVENTS LIST
 // =========================================================
 async function loadEventsList(role) {
-  const container = document.getElementById(
-    role === "student" ? "student_browse" : "organizer_browse"
-  );
+  const listId = role === "student" ? "student_event_list" : "organizer_event_list";
 
-  container.innerHTML = `
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-2xl font-semibold">Browse Events</h3>
-      <input id="${role}_event_search" class="p-2 border rounded w-64"
-        placeholder="Search events..." oninput="searchEvents('${role}')" />
-    </div>
-
-    <div id="${role}_event_list"></div>
-  `;
-
-  searchEvents(role);
-}
-
-
-// =========================================================
-// SEARCH EVENTS
-// =========================================================
-async function searchEvents(role) {
-  const query = document.getElementById(`${role}_event_search`).value || "";
-
-  const res = await fetch(`${API_BASE}/api/events?q=${encodeURIComponent(query)}`);
+  const res = await fetch(`${API_BASE}/api/events`);
   const data = await res.json();
 
-  const list = document.getElementById(`${role}_event_list`);
+  const container = document.getElementById(listId);
 
-  list.innerHTML = data.events.map(ev => `
-    <div class="border p-4 rounded mb-3 hover:bg-gray-50 cursor-pointer"
-         onclick="openEventDetail(${ev.id}, '${role}')">
-      <div class="text-xl font-semibold">${ev.title}</div>
-      <div class="text-gray-600">${new Date(ev.start_time).toLocaleString()}</div>
-      <div class="text-gray-800">${ev.location}</div>
-    </div>
-  `).join("");
+  container.innerHTML = data.events
+    .map(ev => `
+      <div class="border p-4 rounded mb-3 hover:bg-gray-50 cursor-pointer"
+           onclick="openEventDetail(${ev.id}, '${role}')">
+        <div class="text-xl font-semibold">${ev.title}</div>
+        <div class="text-gray-600">${new Date(ev.start_time).toLocaleString()}</div>
+        <div class="text-gray-800">${ev.location}</div>
+      </div>
+    `)
+    .join("");
 }
+
 
 
 // =========================================================
@@ -246,11 +264,23 @@ async function openEventDetail(eventId, role) {
       }
     </div>
   `;
+
+  // show chat panel
+  document.getElementById("event_chat_panel").classList.remove("hidden");
+  document.getElementById("chat_messages").innerHTML = "";
+
+  currentEventRoom = eventId;
+
+  socket.emit("join-event", {
+    eventId,
+    user: { id: user.id, name: user.name }
+  });
 }
 
 
+
 // =========================================================
-// SEND RSVP
+// RSVP
 // =========================================================
 async function sendRSVP(eventId, status) {
   await fetch(`${API_BASE}/api/events/${eventId}/rsvps`, {
@@ -262,8 +292,9 @@ async function sendRSVP(eventId, status) {
     body: JSON.stringify({ status })
   });
 
-  alert("RSVP submitted!");
+  alert("RSVP submitted! Check your email for confirmation!");
 }
+
 
 
 // =========================================================
@@ -279,6 +310,7 @@ function closeCreateEventModal() {
 }
 
 
+
 // =========================================================
 // UPDATE EVENT MODAL
 // =========================================================
@@ -292,17 +324,20 @@ function closeUpdateEventModal() {
 }
 
 
+
 // =========================================================
-// SUBMIT CREATE EVENT
+// CREATE EVENT
 // =========================================================
 async function submitCreateEvent() {
-  const title = document.getElementById("ce_title").value;
-  const description = document.getElementById("ce_description").value;
-  const location = document.getElementById("ce_location").value;
-  const faculty = document.getElementById("ce_faculty").value;
-  const category = document.getElementById("ce_category").value;
-  const start_time = document.getElementById("ce_start").value;
-  const end_time = document.getElementById("ce_end").value;
+  const body = {
+    title: document.getElementById("ce_title").value,
+    description: document.getElementById("ce_description").value,
+    location: document.getElementById("ce_location").value,
+    faculty: document.getElementById("ce_faculty").value,
+    category: document.getElementById("ce_category").value,
+    start_time: document.getElementById("ce_start").value,
+    end_time: document.getElementById("ce_end").value
+  };
 
   const res = await fetch(`${API_BASE}/api/events`, {
     method: "POST",
@@ -310,9 +345,7 @@ async function submitCreateEvent() {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({
-      title, description, location, faculty, category, start_time, end_time
-    })
+    body: JSON.stringify(body)
   });
 
   const data = await res.json();
@@ -330,19 +363,20 @@ async function submitCreateEvent() {
 }
 
 
+
 // =========================================================
-// LOAD MY EVENTS (ORGANIZER)
+// LOAD MY EVENTS
 // =========================================================
 async function loadMyEventsList() {
-  const list = document.getElementById("my_events_list");
-  list.innerHTML = "";
-
   const res = await fetch(`${API_BASE}/api/events`, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
   const data = await res.json();
   const myEvents = data.events.filter(ev => ev.organizer_id === user.id);
+
+  const list = document.getElementById("my_events_list");
+  list.innerHTML = "";
 
   if (myEvents.length === 0) {
     list.innerHTML = `<p class="text-gray-600 italic">You haven't created any events yet.</p>`;
@@ -370,8 +404,9 @@ async function loadMyEventsList() {
 }
 
 
+
 // =========================================================
-// OPEN EDIT MODAL (LOAD EVENT DATA)
+// EDIT EVENT
 // =========================================================
 async function openEditEvent(eventId) {
   editingEventId = eventId;
@@ -380,12 +415,12 @@ async function openEditEvent(eventId) {
   const data = await res.json();
   const ev = data.event;
 
-  // Prefill update modal fields
   document.getElementById("ue_title").value = ev.title;
   document.getElementById("ue_description").value = ev.description;
   document.getElementById("ue_location").value = ev.location;
   document.getElementById("ue_faculty").value = ev.faculty;
   document.getElementById("ue_category").value = ev.category;
+
   document.getElementById("ue_start").value = ev.start_time.replace("Z", "");
   document.getElementById("ue_end").value = ev.end_time.replace("Z", "");
 
@@ -395,8 +430,9 @@ async function openEditEvent(eventId) {
 }
 
 
+
 // =========================================================
-// SUBMIT UPDATE EVENT
+// SUBMIT UPDATE
 // =========================================================
 async function submitUpdateEvent() {
   const body = {
@@ -435,6 +471,7 @@ async function submitUpdateEvent() {
 }
 
 
+
 // =========================================================
 // DELETE EVENT
 // =========================================================
@@ -460,12 +497,69 @@ async function deleteEvent(eventId) {
 }
 
 
+
 // =========================================================
-// BACK TO PREVIOUS PAGE
+// BACK
 // =========================================================
 function backToPreviousPage() {
+  if (currentEventRoom) {
+    socket.emit("leave-event", {
+      eventId: currentEventRoom,
+      user: { id: user.id, name: user.name }
+    });
+    currentEventRoom = null;
+  }
+
+  document.getElementById("event_chat_panel").classList.add("hidden");
   showPage(previousPage);
 }
+
+
+
+// =========================================================
+// CHAT
+// =========================================================
+function sendChatMessage() {
+  const input = document.getElementById("chat_input");
+  const message = input.value.trim();
+
+  if (!message || !socket || !currentEventRoom) return;
+
+  socket.emit("chat:send", {
+    eventId: currentEventRoom,
+    user: { id: user.id, name: user.name },
+    message
+  });
+
+  input.value = "";
+  stopTyping();
+}
+
+function handleTyping() {
+  if (!socket || !currentEventRoom) return;
+
+  socket.emit("chat:typing", {
+    eventId: currentEventRoom,
+    user: { id: user.id, name: user.name }
+  });
+
+  if (typingTimeout) clearTimeout(typingTimeout);
+
+  typingTimeout = setTimeout(stopTyping, 1500);
+}
+
+function stopTyping() {
+  typingTimeout = null;
+}
+
+function appendChatMessage(html) {
+  const box = document.getElementById("chat_messages");
+  if (!box) return;
+
+  box.innerHTML += html;
+  box.scrollTop = box.scrollHeight;
+}
+
 
 
 // =========================================================
@@ -480,7 +574,44 @@ function initWebSocket() {
 
   socket.on("comment:created", d => appendLive("comment", d));
   socket.on("rsvp:updated", d => appendLive("rsvp", d));
+
+  socket.on("chat:new", (msg) => {
+    appendChatMessage(`
+      <div class="mb-2">
+        <span class="font-semibold">${msg.user.name}:</span>
+        <span>${msg.message}</span>
+        <div class="text-xs text-gray-400">${new Date(msg.ts).toLocaleTimeString()}</div>
+      </div>
+    `);
+  });
+
+  socket.on("chat:typing", (userTyping) => {
+    const el = document.getElementById("chat_typing");
+    if (!el) return;
+
+    el.textContent = `${userTyping.name} is typing...`;
+    el.classList.remove("hidden");
+
+    setTimeout(() => el.classList.add("hidden"), 1500);
+  });
+
+  socket.on("user:joined", ({ user }) => {
+    appendChatMessage(`
+      <div class="text-center text-gray-500 text-xs mb-2">
+        ${user.name} joined the chat
+      </div>
+    `);
+  });
+
+  socket.on("user:left", ({ user }) => {
+    appendChatMessage(`
+      <div class="text-center text-gray-500 text-xs mb-2">
+        ${user.name} left the chat
+      </div>
+    `);
+  });
 }
+
 
 
 // =========================================================
@@ -504,3 +635,4 @@ function appendLive(type, payload) {
     if (type === "rsvp") document.getElementById("organizer_live_rsvps").innerHTML += html;
   }
 }
+

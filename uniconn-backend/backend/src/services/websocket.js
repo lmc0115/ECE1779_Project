@@ -1,11 +1,15 @@
-// WebSocket service for real-time updates
+// ============================================================
+// WEBSOCKET SERVICE — STABLE FINAL VERSION
+// ============================================================
+
 let io = null;
 
 function initializeWebSocket(server) {
   const { Server } = require("socket.io");
+
   io = new Server(server, {
     cors: {
-      origin: "*", // In production, specify allowed origins
+      origin: "*",
       methods: ["GET", "POST"]
     }
   });
@@ -13,18 +17,76 @@ function initializeWebSocket(server) {
   io.on("connection", (socket) => {
     console.log(`[websocket] Client connected: ${socket.id}`);
 
-    // Join event-specific room for targeted updates
-    socket.on("join-event", (eventId) => {
-      socket.join(`event:${eventId}`);
-      console.log(`[websocket] Client ${socket.id} joined event:${eventId}`);
+    // =======================================================
+    // JOIN EVENT ROOM
+    // =======================================================
+    socket.on("join-event", ({ eventId, user }) => {
+      if (!eventId) return console.log("❌ join-event missing eventId");
+
+      const room = `event:${eventId}`;
+      socket.join(room);
+
+      console.log(`[websocket] ${user?.name} joined ${room}`);
+
+      socket.to(room).emit("user:joined", { user, eventId });
     });
 
-    // Leave event room
-    socket.on("leave-event", (eventId) => {
-      socket.leave(`event:${eventId}`);
-      console.log(`[websocket] Client ${socket.id} left event:${eventId}`);
+    // =======================================================
+    // LEAVE EVENT ROOM
+    // =======================================================
+    socket.on("leave-event", ({ eventId, user }) => {
+      if (!eventId) return console.log("❌ leave-event missing eventId");
+
+      const room = `event:${eventId}`;
+      socket.leave(room);
+
+      console.log(`[websocket] ${user?.name} left ${room}`);
+
+      socket.to(room).emit("user:left", { user, eventId });
     });
 
+    // =======================================================
+    // CHAT MESSAGE
+    // =======================================================
+    socket.on("chat:send", ({ eventId, user, message }) => {
+      if (!eventId) return console.log("❌ chat:send missing eventId");
+      if (!message) return; // ignore empty messages
+
+      const room = `event:${eventId}`;
+
+      console.log(`[websocket] chat:send received for ${room}`);
+
+      const msg = {
+        eventId,
+        user,
+        message,
+        ts: new Date().toISOString()
+      };
+
+      io.to(room).emit("chat:new", msg);
+
+      console.log(`[websocket] chat:new -> ${room}`);
+    });
+
+    // =======================================================
+    // TYPING INDICATOR
+    // =======================================================
+    socket.on("chat:typing", ({ eventId, user, stop }) => {
+      if (!eventId) return;
+
+      const room = `event:${eventId}`;
+
+      if (stop) {
+        // frontend auto-hides
+        return;
+      }
+
+      socket.to(room).emit("chat:typing", user);
+    });
+
+    // =======================================================
+    // DISCONNECT
+    // =======================================================
     socket.on("disconnect", () => {
       console.log(`[websocket] Client disconnected: ${socket.id}`);
     });
@@ -34,54 +96,48 @@ function initializeWebSocket(server) {
   return io;
 }
 
+
+// ============================================================
+// BROADCAST HELPERS
+// ============================================================
+
 function getIO() {
-  if (!io) {
-    throw new Error("WebSocket server not initialized. Call initializeWebSocket first.");
-  }
+  if (!io) throw new Error("WebSocket not initialized.");
   return io;
 }
 
-// Broadcast event creation
 function broadcastEventCreated(event) {
-  if (!io) return;
-  io.emit("event:created", { event });
-  console.log(`[websocket] Broadcasted event:created for event ${event.id}`);
+  io?.emit("event:created", { event });
+  console.log(`[ws] event:created ${event.id}`);
 }
 
-// Broadcast event update
 function broadcastEventUpdated(event) {
-  if (!io) return;
-  io.emit("event:updated", { event });
-  // Also broadcast to event-specific room
-  io.to(`event:${event.id}`).emit("event:updated", { event });
-  console.log(`[websocket] Broadcasted event:updated for event ${event.id}`);
+  io?.emit("event:updated", { event });
+  io?.to(`event:${event.id}`).emit("event:updated", { event });
+  console.log(`[ws] event:updated ${event.id}`);
 }
 
-// Broadcast event deletion
 function broadcastEventDeleted(eventId) {
-  if (!io) return;
-  io.emit("event:deleted", { eventId });
-  console.log(`[websocket] Broadcasted event:deleted for event ${eventId}`);
+  io?.emit("event:deleted", { eventId });
+  console.log(`[ws] event:deleted ${eventId}`);
 }
 
-// Broadcast RSVP update
 function broadcastRSVPUpdate(rsvp, eventId) {
-  if (!io) return;
-  io.emit("rsvp:updated", { rsvp, eventId });
-  // Also broadcast to event-specific room
-  io.to(`event:${eventId}`).emit("rsvp:updated", { rsvp, eventId });
-  console.log(`[websocket] Broadcasted rsvp:updated for event ${eventId}`);
+  io?.emit("rsvp:updated", { rsvp, eventId });
+  io?.to(`event:${eventId}`).emit("rsvp:updated", { rsvp, eventId });
+  console.log(`[ws] rsvp:updated event ${eventId}`);
 }
 
-// Broadcast comment creation
 function broadcastCommentCreated(comment, eventId) {
-  if (!io) return;
-  io.emit("comment:created", { comment, eventId });
-  // Also broadcast to event-specific room
-  io.to(`event:${eventId}`).emit("comment:created", { comment, eventId });
-  console.log(`[websocket] Broadcasted comment:created for event ${eventId}`);
+  io?.emit("comment:created", { comment, eventId });
+  io?.to(`event:${eventId}`).emit("comment:created", { comment, eventId });
+  console.log(`[ws] comment:created event ${eventId}`);
 }
 
+
+// ============================================================
+// EXPORTS
+// ============================================================
 module.exports = {
   initializeWebSocket,
   getIO,
@@ -91,4 +147,3 @@ module.exports = {
   broadcastRSVPUpdate,
   broadcastCommentCreated
 };
-

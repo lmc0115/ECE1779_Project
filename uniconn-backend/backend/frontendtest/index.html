@@ -158,6 +158,29 @@
 <div id="event_detail_page" class="hidden p-6 max-w-4xl mx-auto">
   <button onclick="backToPreviousPage()" class="text-blue-600 hover:underline mb-4">&larr; Back</button>
   <div id="event_detail_content" class="bg-white shadow rounded-xl p-8"></div>
+    <!-- CHAT PANEL -->
+    <div id="event_chat_panel" class="hidden mt-6 bg-white shadow rounded-xl p-6">
+    <h3 class="text-2xl font-semibold mb-4">Event Chat</h3>
+
+    <div id="chat_messages" 
+        class="h-64 overflow-y-auto border rounded p-3 bg-gray-50 mb-3 text-sm">
+    </div>
+
+    <div id="chat_typing" class="text-gray-500 text-xs mb-2 hidden"></div>
+
+    <div class="flex space-x-2">
+        <input id="chat_input"
+            class="flex-grow border rounded px-3 py-2"
+            placeholder="Type a message..."
+            oninput="handleTyping()" />
+
+        <button onclick="sendChatMessage()"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+        Send
+        </button>
+    </div>
+    </div>
+
 </div>
 
 

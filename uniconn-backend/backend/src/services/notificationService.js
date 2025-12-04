@@ -7,10 +7,13 @@ if (config.sendgrid.apiKey) {
   sgMail.setApiKey(config.sendgrid.apiKey);
 }
 
-// Helper: Get user email by user_id
+// Helper: Fetch user email + name
 async function getUserEmail(userId) {
   try {
-    const result = await db.query("SELECT email, name FROM users WHERE id=$1", [userId]);
+    const result = await db.query(
+      "SELECT email, name FROM users WHERE id=$1",
+      [userId]
+    );
     return result.rows[0] || null;
   } catch (err) {
     console.error("[notification] Error fetching user email:", err);
@@ -18,7 +21,7 @@ async function getUserEmail(userId) {
   }
 }
 
-// Helper: Get event details with organizer info
+// Helper: Fetch event with organizer info
 async function getEventDetails(eventId) {
   try {
     const result = await db.query(
@@ -35,154 +38,125 @@ async function getEventDetails(eventId) {
   }
 }
 
-// Helper: Send email via SendGrid
+// Send email wrapper
 async function sendEmail(to, subject, htmlContent) {
   if (!config.sendgrid.apiKey) {
-    console.log(`[notification] SendGrid not configured. Would send to ${to}: ${subject}`);
-    return;
+    return console.log(
+      `[notification] (SIMULATED) Would send to ${to}: ${subject}`
+    );
   }
 
   try {
-    const msg = {
+    await sgMail.send({
       to,
       from: config.sendgrid.fromEmail,
       subject,
-      html: htmlContent
-    };
-    await sgMail.send(msg);
-    console.log(`[notification] Email sent to ${to}: ${subject}`);
+      html: htmlContent,
+    });
+    console.log(`[notification] Email sent to: ${to}`);
   } catch (err) {
-    console.error(`[notification] Error sending email to ${to}:`, err);
-    if (err.response) {
-      console.error("[notification] SendGrid error details:", err.response.body);
+    console.error(`[notification] Failed to send email to ${to}:`, err);
+    if (err.response?.body) {
+      console.error("[sendgrid error]", err.response.body);
     }
   }
 }
 
+/* ============================================================
+   EMAIL — Organizer Confirmation (Event Created)
+   ============================================================ */
 async function notifyEventCreated(event) {
-  console.log(`[notification] Event created: ${event.title} (#${event.id})`);
-  
-  // Get full event details with organizer info
-  const eventDetails = await getEventDetails(event.id);
-  if (!eventDetails) return;
+  const e = await getEventDetails(event.id);
+  if (!e) return;
 
-  // Format event date/time
-  const startTime = new Date(eventDetails.start_time).toLocaleString();
-  const endTime = eventDetails.end_time 
-    ? new Date(eventDetails.end_time).toLocaleString() 
-    : "TBD";
+  const subject = `Event Created: ${e.title}`;
 
-  const htmlContent = `
-    <h2>New Event: ${eventDetails.title}</h2>
-    <p><strong>Organizer:</strong> ${eventDetails.organizer_name}</p>
-    <p><strong>Description:</strong> ${eventDetails.description || "N/A"}</p>
-    <p><strong>Location:</strong> ${eventDetails.location || "TBD"}</p>
-    <p><strong>Start Time:</strong> ${startTime}</p>
-    <p><strong>End Time:</strong> ${endTime}</p>
-    <p><strong>Faculty:</strong> ${eventDetails.faculty || "N/A"}</p>
-    <p><strong>Category:</strong> ${eventDetails.category || "N/A"}</p>
+  const html = `
+    <h2>Your event has been created</h2>
+    <p>Hi ${e.organizer_name}, your event is now live!</p>
+    <h3>${e.title}</h3>
+    <p><strong>Description:</strong> ${e.description}</p>
+    <p><strong>Location:</strong> ${e.location}</p>
+    <p><strong>Start:</strong> ${new Date(e.start_time).toLocaleString()}</p>
+    <p><strong>End:</strong> ${new Date(e.end_time).toLocaleString()}</p>
   `;
 
-  // Note: In a real system, you might want to notify all users or subscribed users
-  // For now, we just log it. You can extend this to send to a mailing list.
-  console.log(`[notification] Event created notification prepared for: ${eventDetails.title}`);
+  await sendEmail(e.organizer_email, subject, html);
 }
 
+/* ============================================================
+   EMAIL — Organizer Confirmation (Event Updated)
+   ============================================================ */
 async function notifyEventUpdated(event) {
-  console.log(`[notification] Event updated: ${event.title} (#${event.id})`);
-  
-  // Get full event details
-  const eventDetails = await getEventDetails(event.id);
-  if (!eventDetails) return;
+  const e = await getEventDetails(event.id);
+  if (!e) return;
 
-  // Format event date/time
-  const startTime = new Date(eventDetails.start_time).toLocaleString();
-  const endTime = eventDetails.end_time 
-    ? new Date(eventDetails.end_time).toLocaleString() 
-    : "TBD";
+  const subject = `Event Updated: ${e.title}`;
 
-  const htmlContent = `
-    <h2>Event Updated: ${eventDetails.title}</h2>
-    <p>The event details have been updated.</p>
-    <p><strong>Organizer:</strong> ${eventDetails.organizer_name}</p>
-    <p><strong>Description:</strong> ${eventDetails.description || "N/A"}</p>
-    <p><strong>Location:</strong> ${eventDetails.location || "TBD"}</p>
-    <p><strong>Start Time:</strong> ${startTime}</p>
-    <p><strong>End Time:</strong> ${endTime}</p>
-    <p><strong>Faculty:</strong> ${eventDetails.faculty || "N/A"}</p>
-    <p><strong>Category:</strong> ${eventDetails.category || "N/A"}</p>
+  const html = `
+    <h2>Your event has been updated</h2>
+    <p>Hi ${e.organizer_name}, here are the new details:</p>
+    <h3>${e.title}</h3>
+    <p><strong>Description:</strong> ${e.description}</p>
+    <p><strong>Location:</strong> ${e.location}</p>
+    <p><strong>Start:</strong> ${new Date(e.start_time).toLocaleString()}</p>
+    <p><strong>End:</strong> ${new Date(e.end_time).toLocaleString()}</p>
   `;
 
-  // Note: In a real system, notify all RSVP'd users
-  // For now, we just log it.
-  console.log(`[notification] Event updated notification prepared for: ${eventDetails.title}`);
+  await sendEmail(e.organizer_email, subject, html);
 }
 
-async function notifyRSVPConfirmation(rsvpData) {
-  // rsvpData should contain: { event_id, user_id, status }
-  const { event_id, user_id, status } = rsvpData;
+/* ============================================================
+   EMAIL — RSVP Confirmation to Student
+   ============================================================ */
+async function notifyRSVPConfirmation({ event_id, user_id, status }) {
+  const user = await getUserEmail(user_id);
+  const event = await getEventDetails(event_id);
 
-  try {
-    // Get user email
-    const user = await getUserEmail(user_id);
-    if (!user || !user.email) {
-      console.error(`[notification] Cannot send RSVP confirmation: user ${user_id} not found`);
-      return;
-    }
+  if (!user || !event) return;
 
-    // Get event details
-    const event = await getEventDetails(event_id);
-    if (!event) {
-      console.error(`[notification] Cannot send RSVP confirmation: event ${event_id} not found`);
-      return;
-    }
+  const subject = `RSVP ${status}: ${event.title}`;
 
-    // Format event date/time
-    const startTime = new Date(event.start_time).toLocaleString();
-    const endTime = event.end_time 
-      ? new Date(event.end_time).toLocaleString() 
-      : "TBD";
+  const html = `
+    <h2>RSVP Confirmation</h2>
+    <p>Hi ${user.name}, your RSVP status is: <strong>${status}</strong></p>
+    <h3>${event.title}</h3>
+    <p><strong>Location:</strong> ${event.location}</p>
+    <p><strong>Start:</strong> ${new Date(event.start_time).toLocaleString()}</p>
+    <p><strong>End:</strong> ${new Date(event.end_time).toLocaleString()}</p>
+    <p>Organizer: ${event.organizer_name}</p>
+  `;
 
-    // Determine status message
-    let statusMessage = "";
-    let subject = "";
-    if (status === "going") {
-      statusMessage = "You have confirmed your attendance";
-      subject = `RSVP Confirmed: ${event.title}`;
-    } else if (status === "interested") {
-      statusMessage = "You have marked your interest";
-      subject = `RSVP Interest: ${event.title}`;
-    } else if (status === "cancelled") {
-      statusMessage = "Your RSVP has been cancelled";
-      subject = `RSVP Cancelled: ${event.title}`;
-    } else {
-      statusMessage = `Your RSVP status: ${status}`;
-      subject = `RSVP Update: ${event.title}`;
-    }
-
-    const htmlContent = `
-      <h2>${subject}</h2>
-      <p>Hi ${user.name || "there"},</p>
-      <p>${statusMessage} for the following event:</p>
-      <h3>${event.title}</h3>
-      <p><strong>Organizer:</strong> ${event.organizer_name}</p>
-      <p><strong>Description:</strong> ${event.description || "N/A"}</p>
-      <p><strong>Location:</strong> ${event.location || "TBD"}</p>
-      <p><strong>Start Time:</strong> ${startTime}</p>
-      <p><strong>End Time:</strong> ${endTime}</p>
-      <p><strong>Faculty:</strong> ${event.faculty || "N/A"}</p>
-      <p><strong>Category:</strong> ${event.category || "N/A"}</p>
-      <p>Thank you for using UniConn!</p>
-    `;
-
-    await sendEmail(user.email, subject, htmlContent);
-  } catch (err) {
-    console.error("[notification] Error in notifyRSVPConfirmation:", err);
-  }
+  await sendEmail(user.email, subject, html);
 }
+
+/* ============================================================
+   EMAIL — Welcome Email After Registration
+   ============================================================ */
+async function notifyUserRegistered(user) {
+  if (!user || !user.email) return;
+
+  const subject = `Welcome to UniConn!`;
+
+  const html = `
+    <h2>Welcome, ${user.name || "New User"}!</h2>
+    <p>Your account has been successfully created.</p>
+
+    <p><strong>Email:</strong> ${user.email}</p>
+    <p><strong>Role:</strong> ${user.role}</p>
+
+    <p>You can now log in and start exploring events.</p>
+    <br>
+    <p>Thank you for joining UniConn.</p>
+  `;
+
+  await sendEmail(user.email, subject, html);
+}
+
 
 module.exports = {
   notifyEventCreated,
   notifyEventUpdated,
-  notifyRSVPConfirmation
+  notifyRSVPConfirmation,
+  notifyUserRegistered,
 };
