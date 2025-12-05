@@ -129,8 +129,8 @@ function broadcastRSVPUpdate(rsvp, eventId) {
 }
 
 function broadcastCommentCreated(comment, eventId) {
+  // Broadcast once globally; clients will handle per-event filtering.
   io?.emit("comment:created", { comment, eventId });
-  io?.to(`event:${eventId}`).emit("comment:created", { comment, eventId });
   console.log(`[ws] comment:created event ${eventId}`);
 }
 

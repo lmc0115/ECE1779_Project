@@ -79,21 +79,47 @@
   <div class="mb-4 border-b">
     <nav class="-mb-px flex space-x-8" id="student_tabs">
       <button onclick="setStudentTab('browse')" id="student_browse_btn" class="tab-btn border-b-2 border-blue-600 text-blue-600">Browse Events</button>
-      <button onclick="setStudentTab('live_events')" id="student_live_events_btn" class="tab-btn">Live Event Updates</button>
-      <button onclick="setStudentTab('live_comments')" id="student_live_comments_btn" class="tab-btn">Live Comments</button>
-      <button onclick="setStudentTab('live_rsvps')" id="student_live_rsvps_btn" class="tab-btn">Live RSVPs</button>
+      <button onclick="setStudentTab('my_events')" id="student_my_events_btn" class="tab-btn">My Events</button>
     </nav>
   </div>
 
   <!-- Panels -->
   <div id="student_browse" class="tab-panel bg-white p-6 rounded-xl shadow mb-6">
+    <!-- Filters -->
+    <div class="mb-4 grid grid-cols-1 md:grid-cols-5 gap-3">
+      <input id="student_filter_q" class="input" placeholder="Search by keyword">
+      <input id="student_filter_faculty" class="input" placeholder="Faculty">
+      <input id="student_filter_category" class="input" placeholder="Category">
+      <input id="student_filter_from" type="date" class="input">
+      <input id="student_filter_to" type="date" class="input">
+    </div>
+    <div class="mb-4 flex justify-between items-center">
+      <div>
+        <span id="student_result_count" class="text-gray-600 text-sm"></span>
+        <button id="student_clear_filters" onclick="clearFilters('student')" class="hidden ml-3 text-sm text-blue-600 hover:text-blue-800 underline">
+          Clear Filters
+        </button>
+      </div>
+      <div class="flex gap-3 items-center">
+        <select id="student_sort" onchange="loadEventsList('student')" class="input py-2">
+          <option value="date_asc">Sort by: Date (Soonest)</option>
+          <option value="date_desc">Sort by: Date (Latest)</option>
+          <option value="popular">Sort by: Most Popular</option>
+        </select>
+        <button onclick="loadEventsList('student')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">
+          Apply Filters
+        </button>
+      </div>
+    </div>
+
     <!-- Student event list container -->
     <div id="student_event_list"></div>
   </div>
 
-  <div id="student_live_events" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
-  <div id="student_live_comments" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
-  <div id="student_live_rsvps" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+  <div id="student_my_events" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6">
+    <h3 class="text-2xl font-semibold mb-4">My Events</h3>
+    <div id="student_my_events_list"></div>
+  </div>
 </div>
 
 
@@ -114,12 +140,6 @@
 
       <button onclick="setOrganizerTab('my_events')" id="organizer_my_events_btn" class="tab-btn">My Events</button>
 
-      <button onclick="setOrganizerTab('live_events')" id="organizer_live_events_btn" class="tab-btn">Live Event Updates</button>
-
-      <button onclick="setOrganizerTab('live_comments')" id="organizer_live_comments_btn" class="tab-btn">Live Comments</button>
-
-      <button onclick="setOrganizerTab('live_rsvps')" id="organizer_live_rsvps_btn" class="tab-btn">Live RSVPs</button>
-
       <button onclick="setOrganizerTab('analytics')" id="organizer_analytics_btn" class="tab-btn">Analytics Dashboard</button>
 
     </nav>
@@ -128,6 +148,33 @@
   <!-- Panels -->
   <div id="organizer_browse" class="tab-panel bg-white p-6 rounded-xl shadow mb-6">
     <h3 class="text-2xl font-semibold mb-4">Browse Events</h3>
+
+    <!-- Filters -->
+    <div class="mb-4 grid grid-cols-1 md:grid-cols-5 gap-3">
+      <input id="organizer_filter_q" class="input" placeholder="Search by keyword">
+      <input id="organizer_filter_faculty" class="input" placeholder="Faculty">
+      <input id="organizer_filter_category" class="input" placeholder="Category">
+      <input id="organizer_filter_from" type="date" class="input">
+      <input id="organizer_filter_to" type="date" class="input">
+    </div>
+    <div class="mb-4 flex justify-between items-center">
+      <div>
+        <span id="organizer_result_count" class="text-gray-600 text-sm"></span>
+        <button id="organizer_clear_filters" onclick="clearFilters('organizer')" class="hidden ml-3 text-sm text-blue-600 hover:text-blue-800 underline">
+          Clear Filters
+        </button>
+      </div>
+      <div class="flex gap-3 items-center">
+        <select id="organizer_sort" onchange="loadEventsList('organizer')" class="input py-2">
+          <option value="date_asc">Sort by: Date (Soonest)</option>
+          <option value="date_desc">Sort by: Date (Latest)</option>
+          <option value="popular">Sort by: Most Popular</option>
+        </select>
+        <button onclick="loadEventsList('organizer')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">
+          Apply Filters
+        </button>
+      </div>
+    </div>
 
     <!-- Organizer event list container -->
     <div id="organizer_event_list"></div>
@@ -146,10 +193,10 @@
     <div id="my_events_list"></div>
   </div>
 
-  <div id="organizer_live_events" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
-  <div id="organizer_live_comments" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
-  <div id="organizer_live_rsvps" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
-  <div id="organizer_analytics" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6"></div>
+  <div id="organizer_analytics" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6">
+    <h3 class="text-2xl font-semibold mb-4">Analytics Dashboard</h3>
+    <p class="text-gray-600 italic">Analytics features coming soon...</p>
+  </div>
 </div>
 
 
@@ -158,8 +205,34 @@
 <div id="event_detail_page" class="hidden p-6 max-w-4xl mx-auto">
   <button onclick="backToPreviousPage()" class="text-blue-600 hover:underline mb-4">&larr; Back</button>
   <div id="event_detail_content" class="bg-white shadow rounded-xl p-8"></div>
-    <!-- CHAT PANEL -->
-    <div id="event_chat_panel" class="hidden mt-6 bg-white shadow rounded-xl p-6">
+
+  <!-- RSVP STATS PANEL -->
+  <div id="event_stats_panel" class="hidden mt-6 bg-white shadow rounded-xl p-6">
+    <h3 class="text-2xl font-semibold mb-4">RSVP Summary</h3>
+    <div id="event_stats_summary" class="mb-4 text-gray-800"></div>
+    <div>
+      <h4 class="text-xl font-semibold mb-2">Attendees</h4>
+      <ul id="event_attendees_list" class="space-y-1 text-sm"></ul>
+    </div>
+  </div>
+
+  <!-- COMMENTS PANEL -->
+  <div id="event_comments_panel" class="hidden mt-6 bg-white shadow rounded-xl p-6">
+    <h3 class="text-2xl font-semibold mb-4">Comments</h3>
+    <div id="event_comments_list" class="mb-4 space-y-3 text-sm"></div>
+    <p id="comment_error" class="text-red-600 mb-2 hidden"></p>
+    <div>
+      <textarea id="new_comment_body" class="input mb-3" rows="3" placeholder="Share your thoughts about this event..."></textarea>
+      <div class="flex justify-end">
+        <button onclick="submitComment()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+          Post Comment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div id="event_chat_panel" class="hidden mt-6 bg-white shadow rounded-xl p-6">
     <h3 class="text-2xl font-semibold mb-4">Event Chat</h3>
 
     <div id="chat_messages" 
@@ -179,7 +252,7 @@
         Send
         </button>
     </div>
-    </div>
+  </div>
 
 </div>
 
@@ -249,6 +322,9 @@
 
 
 
+<!-- Toast Notification Container -->
+<div id="toast_container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
 <!-- Tailwind helper -->
 <style>
 .input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
@@ -260,6 +336,17 @@
 }
 .tab-btn:hover { color: #1f2937; }
 .tab-panel { min-height: 200px; }
+.category-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.date-badge {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
 </style>
 
 <script src="./dashboard.js"></script>
