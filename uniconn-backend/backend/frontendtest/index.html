@@ -5,6 +5,7 @@
 <title>UniConn Real-Time Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
@@ -194,8 +195,84 @@
   </div>
 
   <div id="organizer_analytics" class="tab-panel hidden bg-white p-6 rounded-xl shadow mb-6">
-    <h3 class="text-2xl font-semibold mb-4">Analytics Dashboard</h3>
-    <p class="text-gray-600 italic">Analytics features coming soon...</p>
+    <h3 class="text-2xl font-semibold mb-6">Analytics Dashboard</h3>
+    
+    <!-- Loading State -->
+    <div id="analytics_loading" class="text-center py-8">
+      <p class="text-gray-500">Loading analytics data...</p>
+    </div>
+
+    <!-- Analytics Content -->
+    <div id="analytics_content" class="hidden">
+      
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 shadow-lg">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-blue-100 text-sm font-medium">Total Events</span>
+            <svg class="w-8 h-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <p class="text-4xl font-bold mb-1" id="kpi_total_events">0</p>
+          <p class="text-blue-100 text-xs">Events you have created</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-6 shadow-lg">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-green-100 text-sm font-medium">Total RSVPs</span>
+            <svg class="w-8 h-8 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+          <p class="text-4xl font-bold mb-1" id="kpi_total_rsvps">0</p>
+          <p class="text-green-100 text-xs">Students registered</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-6 shadow-lg">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-purple-100 text-sm font-medium">Avg RSVPs/Event</span>
+            <svg class="w-8 h-8 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <p class="text-4xl font-bold mb-1" id="kpi_avg_rsvps">0</p>
+          <p class="text-purple-100 text-xs">Average attendance rate</p>
+        </div>
+      </div>
+
+      <!-- Chart Section -->
+      <div class="mb-8">
+        <h4 class="text-xl font-semibold mb-4">Event Performance</h4>
+        <div class="bg-gray-50 rounded-xl p-6">
+          <canvas id="analytics_chart" height="80"></canvas>
+        </div>
+      </div>
+
+      <!-- Top Events Table -->
+      <div>
+        <h4 class="text-xl font-semibold mb-4">Top 5 Events</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Rank</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Event Title</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Category</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Faculty</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">RSVPs</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Comments</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Date</th>
+              </tr>
+            </thead>
+            <tbody id="top_events_table" class="divide-y">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 

@@ -103,6 +103,10 @@ function showPage(id) {
 function logout() {
   token = "";
   user = null;
+  
+  // Clear token from localStorage
+  localStorage.removeItem("token");
+  
   socket?.disconnect();
   socket = null;
 
@@ -135,6 +139,9 @@ async function login() {
 
   token = res.token;
   user = res.user;
+  
+  // Save token to localStorage
+  localStorage.setItem("token", token);
 
   initWebSocket();
 
@@ -174,6 +181,9 @@ async function register() {
 
   token = res.token;
   user = res.user;
+  
+  // Save token to localStorage
+  localStorage.setItem("token", token);
 
   initWebSocket();
 
@@ -223,6 +233,7 @@ function setOrganizerTab(id) {
 
   if (id === "browse") loadEventsList("organizer");
   if (id === "my_events") loadMyEventsList();
+  if (id === "analytics") loadAnalytics();
 }
 
 
@@ -1173,4 +1184,157 @@ async function submitComment() {
 
   textarea.value = "";
 }
+
+
+// =========================================================
+// ANALYTICS DASHBOARD
+// =========================================================
+
+let analyticsChart = null;
+
+async function loadAnalytics() {
+  const loadingEl = document.getElementById("analytics_loading");
+  const contentEl = document.getElementById("analytics_content");
+  
+  // Show loading state
+  loadingEl.classList.remove("hidden");
+  contentEl.classList.add("hidden");
+
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_BASE}/api/analytics/organizer/summary`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to load analytics");
+    }
+
+    const response = await res.json();
+    const data = response.data;
+
+    // Update KPIs
+    document.getElementById("kpi_total_events").textContent = data.kpis.totalEvents;
+    document.getElementById("kpi_total_rsvps").textContent = data.kpis.totalRsvps;
+    document.getElementById("kpi_avg_rsvps").textContent = data.kpis.avgRsvpsPerEvent;
+
+    // Render Chart
+    renderAnalyticsChart(data.eventsChart);
+
+    // Render Top Events Table
+    renderTopEventsTable(data.topEvents);
+
+    // Hide loading, show content
+    loadingEl.classList.add("hidden");
+    contentEl.classList.remove("hidden");
+  } catch (error) {
+    console.error("Error loading analytics:", error);
+    loadingEl.innerHTML = '<p class="text-red-600">Failed to load analytics data. Please try again.</p>';
+  }
+}
+
+function renderAnalyticsChart(eventsData) {
+  const ctx = document.getElementById("analytics_chart");
+  
+  // Destroy existing chart if any
+  if (analyticsChart) {
+    analyticsChart.destroy();
+  }
+
+  // Prepare data
+  const labels = eventsData.map(e => truncateText(e.title, 20));
+  const data = eventsData.map(e => e.rsvpCount);
+
+  // Create chart
+  analyticsChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'RSVPs',
+        data: data,
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          display: false
+        },
+        title: {
+          display: true,
+          text: 'RSVP Count by Event (Top 10)',
+          font: {
+            size: 16,
+            weight: 'bold'
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderTopEventsTable(topEvents) {
+  const tbody = document.getElementById("top_events_table");
+  
+  if (topEvents.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">No events yet. Create your first event!</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = topEvents.map((ev, index) => `
+    <tr class="hover:bg-gray-50 cursor-pointer" onclick="openEventDetail(${ev.id}, 'organizer')">
+      <td class="p-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${
+          index === 0 ? 'bg-yellow-100 text-yellow-800' :
+          index === 1 ? 'bg-gray-100 text-gray-800' :
+          index === 2 ? 'bg-orange-100 text-orange-800' :
+          'bg-blue-100 text-blue-800'
+        } font-bold text-sm">
+          ${index + 1}
+        </span>
+      </td>
+      <td class="p-3 font-medium text-gray-900">${ev.title}</td>
+      <td class="p-3 text-gray-700">
+        <span class="inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800">${ev.category}</span>
+      </td>
+      <td class="p-3 text-gray-700 text-sm">${ev.faculty}</td>
+      <td class="p-3">
+        <span class="inline-flex items-center px-2 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
+          ${ev.rsvpCount}
+        </span>
+      </td>
+      <td class="p-3 text-gray-700 text-sm">${ev.commentCount}</td>
+      <td class="p-3 text-gray-600 text-sm">${new Date(ev.startTime).toLocaleDateString()}</td>
+    </tr>
+  `).join("");
+}
+
+function truncateText(text, maxLength) {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
+}
+
+
+// =========================================================
+// PAGE INITIALIZATION
+// =========================================================
+
+// Note: Auto-login is disabled to allow testing multiple accounts
+// Users must manually login each time
 
