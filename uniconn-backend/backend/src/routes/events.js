@@ -29,7 +29,8 @@ function buildFilterQuery({ faculty, category, from, to, q }) {
     params.push(from);
   }
   if (to) {
-    where.push(`start_time <= $${idx++}`);
+    // Include the entire "to" date by checking < (to + 1 day)
+    where.push(`start_time < ($${idx++}::date + interval '1 day')`);
     params.push(to);
   }
   if (q) {

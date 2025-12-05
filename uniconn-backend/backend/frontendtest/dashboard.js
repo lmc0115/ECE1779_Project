@@ -1,4 +1,12 @@
 // =========================================================
+// HELPERS
+// =========================================================
+function formatRSVPStatus(status) {
+  if (status === "going") return "registered";
+  return status || "";
+}
+
+// =========================================================
 // CONFIG
 // =========================================================
 const API_BASE = "http://localhost:8080";
@@ -14,7 +22,56 @@ let editingEventId = null;
 let currentEventRoom = null;
 let typingTimeout = null;
 
+// =========================================================
+// TOAST NOTIFICATION SYSTEM
+// =========================================================
+function showToast(message, type = "info") {
+  const container = document.getElementById("toast_container");
+  if (!container) return;
 
+  const toast = document.createElement("div");
+  toast.className = `px-6 py-3 rounded-lg shadow-lg text-white transition-opacity duration-300 ${
+    type === "success" ? "bg-green-600" :
+    type === "error" ? "bg-red-600" :
+    type === "warning" ? "bg-yellow-600" : "bg-blue-600"
+  }`;
+  toast.textContent = message;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// =========================================================
+// DATE FORMATTING UTILITIES
+// =========================================================
+function formatRelativeDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = date - now;
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  if (days === -1) return "Yesterday";
+  if (days > 1 && days <= 7) return `In ${days} days`;
+  if (days < -1 && days >= -7) return `${Math.abs(days)} days ago`;
+  return date.toLocaleDateString();
+}
+
+function getCategoryColor(category) {
+  const colors = {
+    'workshop': 'bg-blue-100 text-blue-800',
+    'career': 'bg-green-100 text-green-800',
+    'academic': 'bg-purple-100 text-purple-800',
+    'social': 'bg-pink-100 text-pink-800',
+    'seminar': 'bg-yellow-100 text-yellow-800'
+  };
+  return colors[category?.toLowerCase()] || 'bg-gray-100 text-gray-800';
+}
 
 // =========================================================
 // PAGE SWITCHING
@@ -88,8 +145,6 @@ async function login() {
     showPage("organizer_page");
     setOrganizerTab("browse");
   }
-
-  renderInitialPanels();
 }
 
 
@@ -115,7 +170,7 @@ async function register() {
     return;
   }
 
-  alert("Account Created Successfully! Check your email for confirmation!")
+  showToast("Account created successfully! Check your email for confirmation.", "success");
 
   token = res.token;
   user = res.user;
@@ -124,8 +179,6 @@ async function register() {
 
   if (user.role === "student") showPage("student_page");
   else showPage("organizer_page");
-
-  renderInitialPanels();
 }
 
 
@@ -134,7 +187,7 @@ async function register() {
 // STUDENT TABS
 // =========================================================
 function setStudentTab(id) {
-  const tabs = ["browse", "live_events", "live_comments", "live_rsvps"];
+  const tabs = ["browse", "my_events"];
 
   tabs.forEach(tab => {
     document.getElementById("student_" + tab).classList.add("hidden");
@@ -147,6 +200,7 @@ function setStudentTab(id) {
     .classList.add("border-blue-600", "text-blue-600");
 
   if (id === "browse") loadEventsList("student");
+  if (id === "my_events") loadStudentMyEvents();
 }
 
 
@@ -155,7 +209,7 @@ function setStudentTab(id) {
 // ORGANIZER TABS
 // =========================================================
 function setOrganizerTab(id) {
-  const tabs = ["browse", "my_events", "live_events", "live_comments", "live_rsvps", "analytics"];
+  const tabs = ["browse", "my_events", "analytics"];
 
   tabs.forEach(tab => {
     document.getElementById("organizer_" + tab).classList.add("hidden");
@@ -176,27 +230,6 @@ function setOrganizerTab(id) {
 // =========================================================
 // INITIAL PANELS
 // =========================================================
-function renderInitialPanels() {
-  if (user.role === "student") {
-    document.getElementById("student_live_events").innerHTML =
-      "<h2 class='text-xl font-semibold mb-3'>Listening for event updates...</h2>";
-
-    document.getElementById("student_live_comments").innerHTML =
-      "<h2 class='text-xl font-semibold mb-3'>Listening for comments...</h2>";
-
-    document.getElementById("student_live_rsvps").innerHTML =
-      "<h2 class='text-xl font-semibold mb-3'>Listening for RSVPs...</h2>";
-  } else {
-    document.getElementById("organizer_live_events").innerHTML =
-      "<h2 class='text-xl font-semibold mb-3'>Listening for event updates...</h2>";
-
-    document.getElementById("organizer_live_comments").innerHTML =
-      "<h2 class='text-xl font-semibold mb-3'>Listening for comments...</h2>";
-
-    document.getElementById("organizer_live_rsvps").innerHTML =
-      "<h2 class='text-xl font-semibold mb-3'>Listening for RSVPs...</h2>";
-  }
-}
 
 
 
@@ -205,19 +238,192 @@ function renderInitialPanels() {
 // =========================================================
 async function loadEventsList(role) {
   const listId = role === "student" ? "student_event_list" : "organizer_event_list";
+  const prefix = role === "student" ? "student" : "organizer";
 
-  const res = await fetch(`${API_BASE}/api/events`);
-  const data = await res.json();
+  const params = new URLSearchParams();
+
+  const qEl = document.getElementById(`${prefix}_filter_q`);
+  const facultyEl = document.getElementById(`${prefix}_filter_faculty`);
+  const categoryEl = document.getElementById(`${prefix}_filter_category`);
+  const fromEl = document.getElementById(`${prefix}_filter_from`);
+  const toEl = document.getElementById(`${prefix}_filter_to`);
+  const sortEl = document.getElementById(`${prefix}_sort`);
+
+  const hasFilters = (qEl && qEl.value.trim()) || (facultyEl && facultyEl.value.trim()) || 
+                     (categoryEl && categoryEl.value.trim()) || (fromEl && fromEl.value) || (toEl && toEl.value);
+
+  if (qEl && qEl.value.trim()) params.append("q", qEl.value.trim());
+  if (facultyEl && facultyEl.value.trim()) params.append("faculty", facultyEl.value.trim());
+  if (categoryEl && categoryEl.value.trim()) params.append("category", categoryEl.value.trim());
+  if (fromEl && fromEl.value) params.append("from", fromEl.value);
+  if (toEl && toEl.value) params.append("to", toEl.value);
+
+  const queryString = params.toString();
+  const url = queryString
+    ? `${API_BASE}/api/events?${queryString}`
+    : `${API_BASE}/api/events`;
 
   const container = document.getElementById(listId);
+  const resultCount = document.getElementById(`${prefix}_result_count`);
+  const clearBtn = document.getElementById(`${prefix}_clear_filters`);
 
-  container.innerHTML = data.events
-    .map(ev => `
-      <div class="border p-4 rounded mb-3 hover:bg-gray-50 cursor-pointer"
-           onclick="openEventDetail(${ev.id}, '${role}')">
-        <div class="text-xl font-semibold">${ev.title}</div>
-        <div class="text-gray-600">${new Date(ev.start_time).toLocaleString()}</div>
-        <div class="text-gray-800">${ev.location}</div>
+  // Show loading state
+  if (container) {
+    container.innerHTML = `<div class="text-center py-8"><p class="text-gray-600 italic">Loading events...</p></div>`;
+  }
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    let events = data.events || [];
+
+    // Apply client-side sorting
+    const sortValue = sortEl ? sortEl.value : "date_asc";
+    if (sortValue === "date_desc") {
+      events.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+    } else if (sortValue === "date_asc") {
+      events.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    } else if (sortValue === "popular") {
+      // For now, sort by ID (proxy for creation order). Could fetch RSVP counts later
+      events.sort((a, b) => b.id - a.id);
+    }
+
+    // Update result count
+    if (resultCount) {
+      resultCount.textContent = `Showing ${events.length} event${events.length !== 1 ? 's' : ''}`;
+    }
+
+    // Show/hide clear filters button
+    if (clearBtn) {
+      if (hasFilters) {
+        clearBtn.classList.remove("hidden");
+      } else {
+        clearBtn.classList.add("hidden");
+      }
+    }
+
+    if (events.length === 0) {
+      const emptyMessage = role === "student"
+        ? `<div class="text-center py-12">
+             <p class="text-gray-600 mb-4">No events found${hasFilters ? ' with current filters' : ''}.</p>
+             ${hasFilters ? '<button onclick="clearFilters(\'student\')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Clear Filters</button>' : ''}
+           </div>`
+        : `<div class="text-center py-12">
+             <p class="text-gray-600 mb-4">No events found${hasFilters ? ' with current filters' : ''}.</p>
+             ${hasFilters ? '<button onclick="clearFilters(\'organizer\')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Clear Filters</button>' : ''}
+           </div>`;
+      container.innerHTML = emptyMessage;
+      return;
+    }
+
+    container.innerHTML = events
+      .map(ev => `
+        <div class="border p-4 rounded mb-3 hover:bg-gray-50 cursor-pointer transition-shadow hover:shadow-md"
+             onclick="openEventDetail(${ev.id}, '${role}')">
+          <div class="flex justify-between items-start mb-2">
+            <div class="text-xl font-semibold">${ev.title}</div>
+            <span class="category-badge ${getCategoryColor(ev.category)}">${ev.category || 'Event'}</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-gray-600 mb-2">
+            <span class="date-badge">📅 ${formatRelativeDate(ev.start_time)}</span>
+            <span>📍 ${ev.location}</span>
+          </div>
+          <div class="text-gray-600 text-sm">${new Date(ev.start_time).toLocaleString()}</div>
+        </div>
+      `)
+      .join("");
+  } catch (err) {
+    console.error("Failed to load events:", err);
+    container.innerHTML = `<div class="text-center py-8"><p class="text-red-600">Failed to load events. Please try again.</p></div>`;
+    showToast("Failed to load events", "error");
+  }
+}
+
+// Clear all filters
+function clearFilters(role) {
+  const prefix = role === "student" ? "student" : "organizer";
+  
+  const qEl = document.getElementById(`${prefix}_filter_q`);
+  const facultyEl = document.getElementById(`${prefix}_filter_faculty`);
+  const categoryEl = document.getElementById(`${prefix}_filter_category`);
+  const fromEl = document.getElementById(`${prefix}_filter_from`);
+  const toEl = document.getElementById(`${prefix}_filter_to`);
+
+  if (qEl) qEl.value = "";
+  if (facultyEl) facultyEl.value = "";
+  if (categoryEl) categoryEl.value = "";
+  if (fromEl) fromEl.value = "";
+  if (toEl) toEl.value = "";
+
+  loadEventsList(role);
+  showToast("Filters cleared", "success");
+}
+
+
+
+// =========================================================
+// STUDENT: MY EVENTS
+// =========================================================
+async function loadStudentMyEvents() {
+  const list = document.getElementById("student_my_events_list");
+  if (!list) return;
+
+  list.innerHTML = `<p class="text-gray-600 italic">Loading your events...</p>`;
+
+  // First fetch all events
+  const eventsRes = await fetch(`${API_BASE}/api/events`);
+  const eventsData = await eventsRes.json();
+  const events = eventsData.events || [];
+
+  const myEvents = [];
+
+  for (const ev of events) {
+    try {
+      const rsvpRes = await fetch(`${API_BASE}/api/events/${ev.id}/rsvps`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!rsvpRes.ok) continue;
+
+      const rsvpData = await rsvpRes.json();
+      const rsvps = rsvpData.rsvps || [];
+
+      const mine = rsvps.find(r => r.attendee_id === user.id && r.status !== "cancelled");
+      if (mine) {
+        myEvents.push({ event: ev, myRsvp: mine });
+      }
+    } catch (e) {
+      // Ignore individual errors for now
+    }
+  }
+
+  if (myEvents.length === 0) {
+    list.innerHTML = `
+      <div class="text-center py-12">
+        <p class="text-gray-600 mb-4">You haven't RSVP'd to any events yet.</p>
+        <button onclick="setStudentTab('browse')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Browse Events
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = myEvents
+    .map(({ event: ev, myRsvp }) => `
+      <div class="border p-4 rounded mb-3 hover:bg-gray-50">
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="text-xl font-semibold">${ev.title}</div>
+            <div class="text-gray-600">${new Date(ev.start_time).toLocaleString()}</div>
+            <div class="text-gray-500 text-sm">Your status: ${formatRSVPStatus(myRsvp.status)}</div>
+          </div>
+          <div>
+            <button onclick="openEventDetail(${ev.id}, 'student')" class="px-3 py-1 bg-blue-600 text-white rounded">
+              Open
+            </button>
+          </div>
+        </div>
       </div>
     `)
     .join("");
@@ -239,6 +445,12 @@ async function openEventDetail(eventId, role) {
 
   const isOwner = (user.role === "organizer" && user.id === ev.organizer_id);
 
+  // Hide RSVP stats panel by default (will be shown only for owner)
+  const statsPanel = document.getElementById("event_stats_panel");
+  if (statsPanel) {
+    statsPanel.classList.add("hidden");
+  }
+
   document.getElementById("event_detail_content").innerHTML = `
     <h2 class="text-3xl font-bold mb-2">${ev.title}</h2>
     <p class="text-gray-600">${new Date(ev.start_time).toLocaleString()}</p>
@@ -249,10 +461,12 @@ async function openEventDetail(eventId, role) {
 
     <p class="mt-4">${ev.description}</p>
 
+    <p id="event_rsvp_status" class="mt-4 text-green-600 font-semibold"></p>
+
     <div class="mt-6">
       ${
         role === "student"
-          ? `<button onclick="sendRSVP(${ev.id}, 'going')" class="px-4 py-2 bg-blue-600 text-white rounded">RSVP Going</button>`
+          ? `<button id="event_rsvp_button" onclick="sendRSVP(${ev.id}, 'going')" class="px-4 py-2 bg-blue-600 text-white rounded">RSVP Going</button>`
           : (
               isOwner
                 ? `
@@ -264,6 +478,18 @@ async function openEventDetail(eventId, role) {
       }
     </div>
   `;
+
+  // Load RSVP stats (only for event owner)
+  if (isOwner) {
+    loadEventRSVPs(eventId);
+  }
+  
+  loadEventComments(eventId);
+
+  // Check student's existing RSVP
+  if (role === "student") {
+    checkMyRSVP(eventId);
+  }
 
   // show chat panel
   document.getElementById("event_chat_panel").classList.remove("hidden");
@@ -277,13 +503,42 @@ async function openEventDetail(eventId, role) {
   });
 }
 
+// Check if current student has existing RSVP
+async function checkMyRSVP(eventId) {
+  try {
+    const res = await fetch(`${API_BASE}/api/events/${eventId}/rsvps`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const myRsvp = data.rsvps?.find(r => r.attendee_id === user.id && r.status !== "cancelled");
+
+    if (myRsvp) {
+      const label = document.getElementById("event_rsvp_status");
+      if (label) {
+        label.textContent = "Your RSVP: registered";
+      }
+
+      const btn = document.getElementById("event_rsvp_button");
+      if (btn) {
+        btn.textContent = "Cancel RSVP";
+        btn.className = "px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded";
+        btn.onclick = () => cancelRSVP(eventId);
+      }
+    }
+  } catch (e) {
+    console.error("Failed to check RSVP:", e);
+  }
+}
+
 
 
 // =========================================================
 // RSVP
 // =========================================================
 async function sendRSVP(eventId, status) {
-  await fetch(`${API_BASE}/api/events/${eventId}/rsvps`, {
+  const res = await fetch(`${API_BASE}/api/events/${eventId}/rsvps`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -292,7 +547,66 @@ async function sendRSVP(eventId, status) {
     body: JSON.stringify({ status })
   });
 
-  alert("RSVP submitted! Check your email for confirmation!");
+  if (!res.ok) {
+    showToast("Failed to submit RSVP.", "error");
+    return;
+  }
+
+  showToast("RSVP submitted! Check your email for confirmation.", "success");
+
+  const label = document.getElementById("event_rsvp_status");
+  if (label) {
+    label.textContent = "Your RSVP: registered";
+  }
+
+  const btn = document.getElementById("event_rsvp_button");
+  if (btn) {
+    btn.textContent = "Cancel RSVP";
+    btn.className = "px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded";
+    btn.onclick = () => cancelRSVP(eventId);
+  }
+
+  // Refresh student My Events if applicable
+  if (user.role === "student") {
+    loadStudentMyEvents();
+  }
+}
+
+async function cancelRSVP(eventId) {
+  if (!confirm("Are you sure you want to cancel your RSVP?")) return;
+
+  const res = await fetch(`${API_BASE}/api/events/${eventId}/rsvps`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ status: "cancelled" })
+  });
+
+  if (!res.ok) {
+    showToast("Failed to cancel RSVP.", "error");
+    return;
+  }
+
+  showToast("RSVP cancelled successfully.", "success");
+
+  const label = document.getElementById("event_rsvp_status");
+  if (label) {
+    label.textContent = "";
+  }
+
+  const btn = document.getElementById("event_rsvp_button");
+  if (btn) {
+    btn.textContent = "RSVP Going";
+    btn.className = "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded";
+    btn.onclick = () => sendRSVP(eventId, "going");
+  }
+
+  // Refresh student My Events
+  if (user.role === "student") {
+    loadStudentMyEvents();
+  }
 }
 
 
@@ -329,14 +643,51 @@ function closeUpdateEventModal() {
 // CREATE EVENT
 // =========================================================
 async function submitCreateEvent() {
+  const title = document.getElementById("ce_title").value.trim();
+  const description = document.getElementById("ce_description").value.trim();
+  const location = document.getElementById("ce_location").value.trim();
+  const faculty = document.getElementById("ce_faculty").value.trim();
+  const category = document.getElementById("ce_category").value.trim();
+  const start_time = document.getElementById("ce_start").value;
+  const end_time = document.getElementById("ce_end").value;
+
+  const errorEl = document.getElementById("create_event_error");
+
+  // Validation
+  if (!title) {
+    errorEl.textContent = "Event title is required.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  if (!location) {
+    errorEl.textContent = "Location is required.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  if (!start_time) {
+    errorEl.textContent = "Start time is required.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  if (!end_time) {
+    errorEl.textContent = "End time is required.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  if (new Date(start_time) >= new Date(end_time)) {
+    errorEl.textContent = "End time must be after start time.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
   const body = {
-    title: document.getElementById("ce_title").value,
-    description: document.getElementById("ce_description").value,
-    location: document.getElementById("ce_location").value,
-    faculty: document.getElementById("ce_faculty").value,
-    category: document.getElementById("ce_category").value,
-    start_time: document.getElementById("ce_start").value,
-    end_time: document.getElementById("ce_end").value
+    title,
+    description,
+    location,
+    faculty,
+    category,
+    start_time,
+    end_time
   };
 
   const res = await fetch(`${API_BASE}/api/events`, {
@@ -351,13 +702,13 @@ async function submitCreateEvent() {
   const data = await res.json();
 
   if (!res.ok) {
-    document.getElementById("create_event_error").textContent =
-      data.error || "Failed to create event.";
-    document.getElementById("create_event_error").classList.remove("hidden");
+    errorEl.textContent = data.error || "Failed to create event.";
+    errorEl.classList.remove("hidden");
     return;
   }
 
   closeCreateEventModal();
+  showToast("Event created successfully.", "success");
   loadEventsList("organizer");
   loadMyEventsList();
 }
@@ -379,7 +730,14 @@ async function loadMyEventsList() {
   list.innerHTML = "";
 
   if (myEvents.length === 0) {
-    list.innerHTML = `<p class="text-gray-600 italic">You haven't created any events yet.</p>`;
+    list.innerHTML = `
+      <div class="text-center py-12">
+        <p class="text-gray-600 mb-4">You haven't created any events yet.</p>
+        <button onclick="openCreateEventModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+          Create Your First Event
+        </button>
+      </div>
+    `;
     return;
   }
 
@@ -435,14 +793,51 @@ async function openEditEvent(eventId) {
 // SUBMIT UPDATE
 // =========================================================
 async function submitUpdateEvent() {
+  const title = document.getElementById("ue_title").value.trim();
+  const description = document.getElementById("ue_description").value.trim();
+  const location = document.getElementById("ue_location").value.trim();
+  const faculty = document.getElementById("ue_faculty").value.trim();
+  const category = document.getElementById("ue_category").value.trim();
+  const start_time = document.getElementById("ue_start").value;
+  const end_time = document.getElementById("ue_end").value;
+
+  const errorEl = document.getElementById("update_event_error");
+
+  // Validation
+  if (!title) {
+    errorEl.textContent = "Event title is required.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  if (!location) {
+    errorEl.textContent = "Location is required.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  if (!start_time) {
+    errorEl.textContent = "Start time is required.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  if (!end_time) {
+    errorEl.textContent = "End time is required.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+  if (new Date(start_time) >= new Date(end_time)) {
+    errorEl.textContent = "End time must be after start time.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
   const body = {
-    title: document.getElementById("ue_title").value,
-    description: document.getElementById("ue_description").value,
-    location: document.getElementById("ue_location").value,
-    faculty: document.getElementById("ue_faculty").value,
-    category: document.getElementById("ue_category").value,
-    start_time: document.getElementById("ue_start").value,
-    end_time: document.getElementById("ue_end").value
+    title,
+    description,
+    location,
+    faculty,
+    category,
+    start_time,
+    end_time
   };
 
   const res = await fetch(`${API_BASE}/api/events/${editingEventId}`, {
@@ -457,15 +852,15 @@ async function submitUpdateEvent() {
   const data = await res.json();
 
   if (!res.ok) {
-    document.getElementById("update_event_error").textContent =
-      data.error || "Failed to update event.";
-    document.getElementById("update_event_error").classList.remove("hidden");
+    errorEl.textContent = data.error || "Failed to update event.";
+    errorEl.classList.remove("hidden");
     return;
   }
 
   closeUpdateEventModal();
   editingEventId = null;
 
+  showToast("Event updated successfully.", "success");
   loadEventsList("organizer");
   loadMyEventsList();
 }
@@ -482,16 +877,16 @@ async function deleteEvent(eventId) {
   });
 
   if (res.status === 403) {
-    alert("You cannot delete an event you do not own.");
+    showToast("You cannot delete an event you do not own.", "error");
     return;
   }
 
   if (!res.ok) {
-    alert("Failed to delete event.");
+    showToast("Failed to delete event.", "error");
     return;
   }
 
-  alert("Event deleted.");
+  showToast("Event deleted successfully.", "success");
   showPage(previousPage);
   loadMyEventsList();
 }
@@ -568,12 +963,21 @@ function appendChatMessage(html) {
 function initWebSocket() {
   socket = io(WS_BASE);
 
-  socket.on("event:created", d => appendLive("event", d));
-  socket.on("event:updated", d => appendLive("event", d));
-  socket.on("event:deleted", d => appendLive("event", d));
+  socket.on("comment:created", (d) => {
+    if (currentEventRoom && d.eventId === currentEventRoom) {
+      appendCommentToList(d.comment);
+    }
+  });
 
-  socket.on("comment:created", d => appendLive("comment", d));
-  socket.on("rsvp:updated", d => appendLive("rsvp", d));
+  socket.on("rsvp:updated", (d) => {
+    // Only refresh RSVP stats if we're viewing this event AND the stats panel is visible (owner only)
+    if (currentEventRoom && d.eventId === currentEventRoom) {
+      const statsPanel = document.getElementById("event_stats_panel");
+      if (statsPanel && !statsPanel.classList.contains("hidden")) {
+        loadEventRSVPs(d.eventId);
+      }
+    }
+  });
 
   socket.on("chat:new", (msg) => {
     appendChatMessage(`
@@ -617,22 +1021,156 @@ function initWebSocket() {
 // =========================================================
 // REALTIME PANELS
 // =========================================================
-function appendLive(type, payload) {
+
+
+
+// =========================================================
+// EVENT RSVP STATS
+// =========================================================
+async function loadEventRSVPs(eventId) {
+  const panel = document.getElementById("event_stats_panel");
+  const summary = document.getElementById("event_stats_summary");
+  const list = document.getElementById("event_attendees_list");
+
+  if (!panel || !summary || !list) return;
+
+  summary.textContent = "Loading RSVP statistics...";
+  list.innerHTML = "";
+  panel.classList.remove("hidden");
+
+  const res = await fetch(`${API_BASE}/api/events/${eventId}/rsvps`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    summary.textContent = "Unable to load RSVP data.";
+    return;
+  }
+
+  const data = await res.json();
+  const rsvps = data.rsvps || [];
+
+  // Only count "going" RSVPs
+  const goingRsvps = rsvps.filter(r => r.status === "going");
+  const goingCount = goingRsvps.length;
+
+  summary.textContent = `Total Registered: ${goingCount}`;
+
+  if (goingCount === 0) {
+    list.innerHTML = `<li class="text-gray-600 italic">No RSVPs yet.</li>`;
+    return;
+  }
+
+  list.innerHTML = goingRsvps
+    .map(r => `
+      <li class="flex justify-between items-center border-b py-1">
+        <span>${r.attendee_name}</span>
+        <span class="text-sm text-green-600">Registered</span>
+      </li>
+    `)
+    .join("");
+}
+
+
+
+// =========================================================
+// EVENT COMMENTS
+// =========================================================
+async function loadEventComments(eventId) {
+  const panel = document.getElementById("event_comments_panel");
+  const list = document.getElementById("event_comments_list");
+  const errorEl = document.getElementById("comment_error");
+
+  if (!panel || !list || !errorEl) return;
+
+  panel.classList.remove("hidden");
+  errorEl.classList.add("hidden");
+  list.innerHTML = `<p class="text-gray-600 italic">Loading comments...</p>`;
+
+  const res = await fetch(`${API_BASE}/api/events/${eventId}/comments`);
+  if (!res.ok) {
+    list.innerHTML = `<p class="text-gray-600 italic">Unable to load comments.</p>`;
+    return;
+  }
+
+  const data = await res.json();
+  const comments = data.comments || [];
+
+  renderEventComments(comments);
+}
+
+function renderEventComments(comments) {
+  const list = document.getElementById("event_comments_list");
+  if (!list) return;
+
+  if (comments.length === 0) {
+    list.innerHTML = `<p class="text-gray-600 italic">No comments yet. Be the first to comment!</p>`;
+    return;
+  }
+
+  list.innerHTML = comments
+    .map(c => `
+      <div class="border-b pb-2">
+        <div class="text-sm"><span class="font-semibold">${c.author_name}</span></div>
+        <div class="text-gray-800 text-sm mt-1">${c.body}</div>
+        <div class="text-xs text-gray-400 mt-1">${new Date(c.created_at).toLocaleString()}</div>
+      </div>
+    `)
+    .join("");
+}
+
+function appendCommentToList(comment) {
+  const list = document.getElementById("event_comments_list");
+  if (!list) return;
+
+  // If list currently shows "no comments", reset it
+  if (list.innerHTML.includes("No comments yet")) {
+    list.innerHTML = "";
+  }
+
   const html = `
-    <div class="p-3 border-b">
-      <div class="font-bold">${type.toUpperCase()}</div>
-      <pre class="text-xs">${JSON.stringify(payload, null, 2)}</pre>
+    <div class="border-b pb-2">
+      <div class="text-sm"><span class="font-semibold">${comment.author_name}</span></div>
+      <div class="text-gray-800 text-sm mt-1">${comment.body}</div>
+      <div class="text-xs text-gray-400 mt-1">${new Date(comment.created_at).toLocaleString()}</div>
     </div>
   `;
 
-  if (user.role === "student") {
-    if (type === "event") document.getElementById("student_live_events").innerHTML += html;
-    if (type === "comment") document.getElementById("student_live_comments").innerHTML += html;
-    if (type === "rsvp") document.getElementById("student_live_rsvps").innerHTML += html;
-  } else {
-    if (type === "event") document.getElementById("organizer_live_events").innerHTML += html;
-    if (type === "comment") document.getElementById("organizer_live_comments").innerHTML += html;
-    if (type === "rsvp") document.getElementById("organizer_live_rsvps").innerHTML += html;
+  list.innerHTML += html;
+}
+
+async function submitComment() {
+  const errorEl = document.getElementById("comment_error");
+  const textarea = document.getElementById("new_comment_body");
+
+  if (!textarea || !errorEl || !currentEventRoom) return;
+
+  const body = textarea.value.trim();
+  if (!body) {
+    errorEl.textContent = "Comment cannot be empty.";
+    errorEl.classList.remove("hidden");
+    return;
   }
+
+  errorEl.classList.add("hidden");
+
+  const res = await fetch(`${API_BASE}/api/events/${currentEventRoom}/comments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ body })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    errorEl.textContent = data.error || "Failed to post comment.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
+  textarea.value = "";
 }
 

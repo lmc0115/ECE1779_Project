@@ -12,7 +12,7 @@ router.get("/:eventId/rsvps", authRequired, async (req, res) => {
     const eventId = Number(req.params.eventId);
 
     const result = await db.query(
-      `SELECT r.id, r.status, r.created_at, r.updated_at,
+      `SELECT r.id, r.status, r.created_at,
               u.name AS attendee_name, u.id AS attendee_id
        FROM rsvps r
        JOIN users u ON r.user_id = u.id
@@ -39,8 +39,8 @@ router.post("/:eventId/rsvps", authRequired, async (req, res) => {
       `INSERT INTO rsvps (event_id, user_id, status)
        VALUES ($1, $2, $3)
        ON CONFLICT (event_id, user_id)
-       DO UPDATE SET status = EXCLUDED.status, updated_at = NOW()
-       RETURNING id, event_id, user_id, status, created_at, updated_at`,
+       DO UPDATE SET status = EXCLUDED.status
+       RETURNING id, event_id, user_id, status, created_at`,
       [eventId, req.user.id, status]
     );
 
