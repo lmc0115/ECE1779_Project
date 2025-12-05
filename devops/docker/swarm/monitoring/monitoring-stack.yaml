@@ -6,7 +6,12 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
     deploy:
       placement:
         constraints:
@@ -14,6 +19,7 @@ services:
     networks:
       - uniconn_internal
       - traefik-public
+
   node-exporter:
     image: prom/node-exporter:latest
     command:
@@ -23,16 +29,19 @@ services:
     ports:
       - "9100:9100"
     deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
+      mode: global
     networks:
       - uniconn_internal
+
   grafana:
     image: grafana/grafana:latest
     ports:
       - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
     deploy:
       placement:
         constraints:
@@ -46,4 +55,8 @@ networks:
     external: true
   traefik-public:
     external: true
+
+volumes:
+  prometheus-data:
+  grafana-data:
 

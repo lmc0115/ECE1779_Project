@@ -13,9 +13,29 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.uniconn.rule=PathPrefix(`/api`)"
-        - "traefik.http.routers.uniconn.entrypoints=web"
+        
+        # HTTPS Router for all traffic (frontend + API)
+        - "traefik.http.routers.uniconn.rule=Host(`${DOMAIN:-uniconn.ca}`) || Host(`www.${DOMAIN:-uniconn.ca}`)"
+        - "traefik.http.routers.uniconn.entrypoints=websecure"
+        - "traefik.http.routers.uniconn.tls=true"
+        - "traefik.http.routers.uniconn.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.uniconn.middlewares=security-headers@docker"
+        
+        # HTTP Router (will redirect to HTTPS via Traefik global config)
+        - "traefik.http.routers.uniconn-http.rule=Host(`${DOMAIN:-uniconn.ca}`) || Host(`www.${DOMAIN:-uniconn.ca}`)"
+        - "traefik.http.routers.uniconn-http.entrypoints=web"
+        
+        # Load balancer configuration
         - "traefik.http.services.uniconn.loadbalancer.server.port=8080"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie.name=uniconn_session"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie.secure=true"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie.httpOnly=true"
+        
+        # Health check
+        - "traefik.http.services.uniconn.loadbalancer.healthcheck.path=/api/health"
+        - "traefik.http.services.uniconn.loadbalancer.healthcheck.interval=30s"
+        - "traefik.http.services.uniconn.loadbalancer.healthcheck.timeout=5s"
     networks:
       - traefik-public
       - internal
@@ -25,6 +45,15 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:-noreply@uniconn.ca}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:16-alpine
@@ -40,6 +69,11 @@ services:
           - node.role == manager
     networks:
       - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 networks:
   traefik-public:
@@ -49,5 +83,4 @@ networks:
 
 volumes:
   db-data:
-
 

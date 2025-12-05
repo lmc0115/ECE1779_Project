@@ -9,8 +9,36 @@ function formatRSVPStatus(status) {
 // =========================================================
 // CONFIG
 // =========================================================
-const API_BASE = "http://localhost:8080";
-const WS_BASE = "ws://localhost:8080";
+// Check if opened directly from file system
+if (window.location.protocol === 'file:') {
+  document.body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif;background:#f3f4f6;padding:20px;text-align:center;">
+      <h1 style="color:#dc2626;font-size:2rem;margin-bottom:1rem;">⚠️ Cannot Open Directly</h1>
+      <p style="color:#4b5563;font-size:1.1rem;max-width:500px;margin-bottom:1.5rem;">
+        This file cannot be opened directly from the file system.<br>
+        Please access it through the server.
+      </p>
+      <div style="background:#1f2937;color:#10b981;padding:1rem 2rem;border-radius:8px;font-family:monospace;font-size:1rem;">
+        http://localhost:8080
+      </div>
+      <p style="color:#6b7280;font-size:0.9rem;margin-top:1.5rem;">
+        Make sure Docker is running:<br>
+        <code style="background:#e5e7eb;padding:4px 8px;border-radius:4px;">docker-compose -f docker-compose.local.yaml up</code>
+      </p>
+    </div>
+  `;
+  throw new Error('App must be accessed through HTTP server, not file:// protocol');
+}
+
+// Auto-detect API and WebSocket URLs based on current location
+const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const protocol = window.location.protocol;
+const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+const host = window.location.host;
+
+// Use relative URLs for production, localhost:8080 for local dev
+const API_BASE = isLocalDev ? `${protocol}//${host}` : `${protocol}//${host}`;
+const WS_BASE = isLocalDev ? `${wsProtocol}//${host}` : `${wsProtocol}//${host}`;
 
 let token = "";
 let user = null;
@@ -116,6 +144,80 @@ function logout() {
 
 
 // =========================================================
+// PROFILE MODAL
+// =========================================================
+function openProfileModal() {
+  if (!user) return;
+
+  // Get user initials for avatar
+  const initials = user.name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+
+  // Update avatar
+  const avatarEl = document.getElementById('profile_avatar');
+  if (avatarEl) {
+    avatarEl.textContent = initials;
+    // Set gradient based on role
+    if (user.role === 'student') {
+      avatarEl.className = 'w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white';
+    } else {
+      avatarEl.className = 'w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white';
+    }
+  }
+
+  // Update profile info
+  document.getElementById('profile_name').textContent = user.name;
+  document.getElementById('profile_email').textContent = user.email;
+  document.getElementById('profile_role').textContent = user.role;
+  document.getElementById('profile_id').textContent = `#${user.id}`;
+
+  // Update role badge
+  const roleBadge = document.getElementById('profile_role_badge');
+  if (roleBadge) {
+    if (user.role === 'student') {
+      roleBadge.textContent = '🎓 Student';
+      roleBadge.className = 'inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700';
+    } else if (user.role === 'organizer') {
+      roleBadge.textContent = '📋 Organizer';
+      roleBadge.className = 'inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700';
+    } else {
+      roleBadge.textContent = user.role;
+      roleBadge.className = 'inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700';
+    }
+  }
+
+  // Show modal
+  document.getElementById('profile_modal').classList.remove('hidden');
+}
+
+function closeProfileModal() {
+  document.getElementById('profile_modal').classList.add('hidden');
+}
+
+function updateUserAvatars() {
+  if (!user) return;
+
+  const initials = user.name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+
+  const studentAvatar = document.getElementById('student_avatar');
+  const organizerAvatar = document.getElementById('organizer_avatar');
+
+  if (studentAvatar) studentAvatar.textContent = initials;
+  if (organizerAvatar) organizerAvatar.textContent = initials;
+}
+
+
+
+// =========================================================
 // LOGIN
 // =========================================================
 async function login() {
@@ -144,6 +246,7 @@ async function login() {
   localStorage.setItem("token", token);
 
   initWebSocket();
+  updateUserAvatars();
 
   if (user.role === "student") {
     showPage("student_page");
@@ -186,9 +289,15 @@ async function register() {
   localStorage.setItem("token", token);
 
   initWebSocket();
+  updateUserAvatars();
 
-  if (user.role === "student") showPage("student_page");
-  else showPage("organizer_page");
+  if (user.role === "student") {
+    showPage("student_page");
+    setStudentTab("browse");
+  } else {
+    showPage("organizer_page");
+    setOrganizerTab("browse");
+  }
 }
 
 

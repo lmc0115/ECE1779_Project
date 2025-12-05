@@ -1,0 +1,60 @@
+version: "3.9"
+
+# Local Swarm testing - NO HTTPS (for testing stack deployment locally)
+# Usage:
+#   1. docker swarm init
+#   2. docker network create --driver overlay traefik-public
+#   3. docker stack deploy -c traefik-stack-local.yaml traefik
+#   4. docker stack deploy -c docker-stack-local.yaml uniconn
+
+services:
+
+  api:
+    image: uniconn-api:local
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        # HTTP only for local testing
+        - "traefik.http.routers.uniconn.rule=PathPrefix(`/`)"
+        - "traefik.http.routers.uniconn.entrypoints=web"
+        - "traefik.http.services.uniconn.loadbalancer.server.port=8080"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie.name=uniconn_session"
+    networks:
+      - traefik-public
+      - internal
+    environment:
+      DATABASE_URL: postgres://uniconn:localpassword@db:5432/uniconn
+      POSTGRES_DB: uniconn
+      POSTGRES_USER: uniconn
+      POSTGRES_PASSWORD: localpassword
+      JWT_SECRET: local-test-jwt-secret
+      NODE_ENV: development
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: uniconn
+      POSTGRES_USER: uniconn
+      POSTGRES_PASSWORD: localpassword
+    volumes:
+      - local-db-data:/var/lib/postgresql/data
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - internal
+
+networks:
+  traefik-public:
+    external: true
+  internal:
+    driver: overlay
+
+volumes:
+  local-db-data:
+

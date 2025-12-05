@@ -13,22 +13,22 @@
 <!-- LOGIN PAGE -->
 <div id="login_page" class="flex items-center justify-center min-h-screen">
   <div class="bg-white shadow-xl rounded-xl p-10 w-full max-w-md">
-    <h1 class="text-3xl font-semibold text-center mb-6">UniConn Login</h1>
+    <h1 class="text-3xl font-semibold text-center mb-6">🦄UniConn Login</h1>
 
     <p id="login_error" class="text-red-600 text-center mb-4 hidden"></p>
 
     <div class="space-y-4">
-      <input id="login_email" class="w-full p-3 border rounded-lg" placeholder="Email" />
-      <input id="login_password" type="password" class="w-full p-3 border rounded-lg" placeholder="Password" />
+      <input id="login_email" class="w-full p-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none" placeholder="Email" />
+      <input id="login_password" type="password" class="w-full p-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none" placeholder="Password" />
     </div>
 
     <button onclick="login()" 
-      class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow">
+      class="w-full mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
       Login
     </button>
 
     <button onclick="showPage('register_page')" 
-      class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg shadow">
+      class="w-full mt-3 bg-white border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-700 py-3 rounded-lg shadow hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
       Create an Account
     </button>
   </div>
@@ -44,23 +44,23 @@
     <p id="register_error" class="text-red-600 text-center mb-4 hidden"></p>
 
     <div class="space-y-4">
-      <input id="reg_name" class="w-full p-3 border rounded-lg" placeholder="Full Name" />
-      <input id="reg_email" class="w-full p-3 border rounded-lg" placeholder="Email" />
-      <input id="reg_password" type="password" class="w-full p-3 border rounded-lg" placeholder="Password" />
+      <input id="reg_name" class="w-full p-3 border border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none" placeholder="Full Name" />
+      <input id="reg_email" class="w-full p-3 border border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none" placeholder="Email" />
+      <input id="reg_password" type="password" class="w-full p-3 border border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none" placeholder="Password" />
 
-      <select id="reg_role" class="w-full p-3 border rounded-lg bg-white">
+      <select id="reg_role" class="w-full p-3 border border-gray-200 rounded-lg bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 outline-none cursor-pointer">
         <option value="student">Student</option>
         <option value="organizer">Organizer</option>
       </select>
     </div>
 
     <button onclick="register()" 
-      class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg shadow">
+      class="w-full mt-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
       Register
     </button>
 
     <button onclick="showPage('login_page')" 
-      class="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg shadow">
+      class="w-full mt-3 bg-white border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 text-gray-700 py-3 rounded-lg shadow hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
       Back to Login
     </button>
   </div>
@@ -72,8 +72,14 @@
 <div id="student_page" class="hidden p-6 max-w-6xl mx-auto">
 
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-3xl font-semibold">Student Dashboard</h2>
-    <button onclick="logout()" class="text-red-500 hover:text-red-700">Logout</button>
+    <h2 class="text-3xl font-semibold">🦄Student Dashboard</h2>
+    <button onclick="openProfileModal()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200">
+      <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm" id="student_avatar"></div>
+      <span class="text-gray-700 font-medium">My Profile</span>
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
   </div>
 
   <!-- Tabs -->
@@ -88,11 +94,26 @@
   <div id="student_browse" class="tab-panel bg-white p-6 rounded-xl shadow mb-6">
     <!-- Filters -->
     <div class="mb-4 grid grid-cols-1 md:grid-cols-5 gap-3">
-      <input id="student_filter_q" class="input" placeholder="Search by keyword">
-      <input id="student_filter_faculty" class="input" placeholder="Faculty">
-      <input id="student_filter_category" class="input" placeholder="Category">
-      <input id="student_filter_from" type="date" class="input">
-      <input id="student_filter_to" type="date" class="input">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Search Events</label>
+        <input id="student_filter_q" class="input" placeholder="Search by keyword">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Faculty</label>
+        <input id="student_filter_faculty" class="input" placeholder="e.g. Engineering">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
+        <input id="student_filter_category" class="input" placeholder="e.g. Workshop">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">From Date</label>
+        <input id="student_filter_from" type="date" class="input">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">To Date</label>
+        <input id="student_filter_to" type="date" class="input">
+      </div>
     </div>
     <div class="mb-4 flex justify-between items-center">
       <div>
@@ -107,7 +128,7 @@
           <option value="date_desc">Sort by: Date (Latest)</option>
           <option value="popular">Sort by: Most Popular</option>
         </select>
-        <button onclick="loadEventsList('student')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">
+        <button onclick="loadEventsList('student')" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
           Apply Filters
         </button>
       </div>
@@ -129,8 +150,14 @@
 <div id="organizer_page" class="hidden p-6 max-w-6xl mx-auto">
 
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-3xl font-semibold">Organizer Dashboard</h2>
-    <button onclick="logout()" class="text-red-500 hover:text-red-700">Logout</button>
+    <h2 class="text-3xl font-semibold">🦄Organizer Dashboard</h2>
+    <button onclick="openProfileModal()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200">
+      <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-sm" id="organizer_avatar"></div>
+      <span class="text-gray-700 font-medium">My Profile</span>
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
   </div>
 
   <!-- Tabs -->
@@ -152,11 +179,26 @@
 
     <!-- Filters -->
     <div class="mb-4 grid grid-cols-1 md:grid-cols-5 gap-3">
-      <input id="organizer_filter_q" class="input" placeholder="Search by keyword">
-      <input id="organizer_filter_faculty" class="input" placeholder="Faculty">
-      <input id="organizer_filter_category" class="input" placeholder="Category">
-      <input id="organizer_filter_from" type="date" class="input">
-      <input id="organizer_filter_to" type="date" class="input">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Search Events</label>
+        <input id="organizer_filter_q" class="input" placeholder="Search by keyword">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Faculty</label>
+        <input id="organizer_filter_faculty" class="input" placeholder="e.g. Engineering">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
+        <input id="organizer_filter_category" class="input" placeholder="e.g. Workshop">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">From Date</label>
+        <input id="organizer_filter_from" type="date" class="input">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1">To Date</label>
+        <input id="organizer_filter_to" type="date" class="input">
+      </div>
     </div>
     <div class="mb-4 flex justify-between items-center">
       <div>
@@ -171,7 +213,7 @@
           <option value="date_desc">Sort by: Date (Latest)</option>
           <option value="popular">Sort by: Most Popular</option>
         </select>
-        <button onclick="loadEventsList('organizer')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">
+        <button onclick="loadEventsList('organizer')" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
           Apply Filters
         </button>
       </div>
@@ -186,7 +228,7 @@
       <h3 class="text-2xl font-semibold">My Events</h3>
 
       <button onclick="openCreateEventModal()" 
-        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow">
+        class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-medium">
         + Create Event
       </button>
     </div>
@@ -220,7 +262,7 @@
 
         <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-6 shadow-lg">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-green-100 text-sm font-medium">Total RSVPs</span>
+            <span class="text-green-100 text-sm font-medium">Total Registrations</span>
             <svg class="w-8 h-8 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
@@ -231,7 +273,7 @@
 
         <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-6 shadow-lg">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-purple-100 text-sm font-medium">Avg RSVPs/Event</span>
+            <span class="text-purple-100 text-sm font-medium">Avg Registrations/Event</span>
             <svg class="w-8 h-8 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
@@ -260,7 +302,7 @@
                 <th class="text-left p-3 text-sm font-semibold text-gray-700">Event Title</th>
                 <th class="text-left p-3 text-sm font-semibold text-gray-700">Category</th>
                 <th class="text-left p-3 text-sm font-semibold text-gray-700">Faculty</th>
-                <th class="text-left p-3 text-sm font-semibold text-gray-700">RSVPs</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Registrations</th>
                 <th class="text-left p-3 text-sm font-semibold text-gray-700">Comments</th>
                 <th class="text-left p-3 text-sm font-semibold text-gray-700">Date</th>
               </tr>
@@ -280,12 +322,14 @@
 
 <!-- EVENT DETAIL PAGE -->
 <div id="event_detail_page" class="hidden p-6 max-w-4xl mx-auto">
-  <button onclick="backToPreviousPage()" class="text-blue-600 hover:underline mb-4">&larr; Back</button>
+  <button onclick="backToPreviousPage()" class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded-lg mb-4 transition-all duration-200 flex items-center gap-1 font-medium">
+    <span>&larr;</span> Back
+  </button>
   <div id="event_detail_content" class="bg-white shadow rounded-xl p-8"></div>
 
   <!-- RSVP STATS PANEL -->
   <div id="event_stats_panel" class="hidden mt-6 bg-white shadow rounded-xl p-6">
-    <h3 class="text-2xl font-semibold mb-4">RSVP Summary</h3>
+    <h3 class="text-2xl font-semibold mb-4">Registration Summary</h3>
     <div id="event_stats_summary" class="mb-4 text-gray-800"></div>
     <div>
       <h4 class="text-xl font-semibold mb-2">Attendees</h4>
@@ -301,7 +345,7 @@
     <div>
       <textarea id="new_comment_body" class="input mb-3" rows="3" placeholder="Share your thoughts about this event..."></textarea>
       <div class="flex justify-end">
-        <button onclick="submitComment()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+        <button onclick="submitComment()" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium">
           Post Comment
         </button>
       </div>
@@ -313,19 +357,19 @@
     <h3 class="text-2xl font-semibold mb-4">Event Chat</h3>
 
     <div id="chat_messages" 
-        class="h-64 overflow-y-auto border rounded p-3 bg-gray-50 mb-3 text-sm">
+        class="h-64 overflow-y-auto border border-gray-200 rounded-xl p-4 bg-gradient-to-b from-gray-50 to-white mb-3 text-sm shadow-inner">
     </div>
 
     <div id="chat_typing" class="text-gray-500 text-xs mb-2 hidden"></div>
 
     <div class="flex space-x-2">
         <input id="chat_input"
-            class="flex-grow border rounded px-3 py-2"
+            class="flex-grow border border-gray-200 rounded-lg px-4 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none"
             placeholder="Type a message..."
             oninput="handleTyping()" />
 
         <button onclick="sendChatMessage()"
-                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+                class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium">
         Send
         </button>
     </div>
@@ -336,8 +380,8 @@
 
 
 <!-- CREATE EVENT MODAL -->
-<div id="create_event_modal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-  <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg relative">
+<div id="create_event_modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg relative border border-gray-100">
 
     <h2 class="text-2xl font-bold mb-4">Create New Event</h2>
 
@@ -359,15 +403,15 @@
     </div>
 
     <div class="flex justify-end mt-6 space-x-3">
-      <button onclick="closeCreateEventModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-      <button onclick="submitCreateEvent()" class="px-4 py-2 bg-blue-600 text-white rounded">Create Event</button>
+      <button onclick="closeCreateEventModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium">Cancel</button>
+      <button onclick="submitCreateEvent()" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium">Create Event</button>
     </div>
   </div>
 </div>
 
 <!-- UPDATE EVENT MODAL -->
-<div id="update_event_modal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-  <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg relative">
+<div id="update_event_modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg relative border border-gray-100">
 
     <h2 class="text-2xl font-bold mb-4">Edit Event</h2>
 
@@ -389,9 +433,93 @@
     </div>
 
     <div class="flex justify-end mt-6 space-x-3">
-      <button onclick="closeUpdateEventModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-      <button onclick="submitUpdateEvent()" class="px-4 py-2 bg-blue-600 text-white rounded">
+      <button onclick="closeUpdateEventModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium">Cancel</button>
+      <button onclick="submitUpdateEvent()" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium">
         Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profile_modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onclick="if(event.target === this) closeProfileModal()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative border border-gray-100 overflow-hidden">
+    
+    <!-- Header with gradient -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 pt-8 pb-16 relative">
+      <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-white/80 hover:text-white transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      <h2 class="text-2xl font-bold text-white">Personal Information</h2>
+      <p class="text-blue-100 text-sm mt-1">Your account details</p>
+    </div>
+
+    <!-- Avatar -->
+    <div class="flex justify-center -mt-12 relative z-10">
+      <div id="profile_avatar" class="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white">
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="px-8 pt-4 pb-8">
+      
+      <!-- User Name -->
+      <div class="text-center mb-6">
+        <h3 id="profile_name" class="text-2xl font-bold text-gray-800"></h3>
+        <span id="profile_role_badge" class="inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium"></span>
+      </div>
+
+      <!-- Info Cards -->
+      <div class="space-y-3">
+        <!-- Email -->
+        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 font-medium">Email Address</p>
+            <p id="profile_email" class="text-gray-800 font-medium"></p>
+          </div>
+        </div>
+
+        <!-- Role -->
+        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 font-medium">Account Role</p>
+            <p id="profile_role" class="text-gray-800 font-medium capitalize"></p>
+          </div>
+        </div>
+
+        <!-- User ID -->
+        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 font-medium">User ID</p>
+            <p id="profile_id" class="text-gray-800 font-medium"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logout Button -->
+      <button onclick="logout(); closeProfileModal();" 
+        class="w-full mt-6 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        Sign Out
       </button>
     </div>
   </div>
@@ -404,25 +532,243 @@
 
 <!-- Tailwind helper -->
 <style>
-.input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+/* ===== Base Input Styles ===== */
+.input { 
+  width: 100%; 
+  padding: 10px; 
+  border: 1px solid #d1d5db; 
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: white;
+}
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
+}
+.input:hover:not(:focus) {
+  border-color: #9ca3af;
+}
+
+/* ===== Tab Styles ===== */
 .tab-btn {
   padding: 12px 4px;
   font-size: 1rem;
   color: #6b7280;
   border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
 }
-.tab-btn:hover { color: #1f2937; }
-.tab-panel { min-height: 200px; }
+.tab-btn:hover { 
+  color: #1f2937;
+  transform: translateY(-2px);
+}
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #3b82f6;
+  transition: width 0.3s ease;
+}
+.tab-btn:hover::after {
+  width: 100%;
+}
+
+/* ===== Panel Styles ===== */
+.tab-panel { 
+  min-height: 200px;
+}
+
+/* ===== Badge Styles ===== */
 .category-badge {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
+  transition: transform 0.2s ease;
+}
+.category-badge:hover {
+  transform: scale(1.05);
 }
 .date-badge {
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+/* ===== Button Effects ===== */
+button {
+  transition: all 0.2s ease;
+}
+button:active {
+  transform: scale(0.97);
+}
+
+/* ===== Modal Card Effects Only ===== */
+#create_event_modal > div,
+#update_event_modal > div {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Modal Animations ===== */
+#create_event_modal > div,
+#update_event_modal > div,
+#profile_modal > div {
+  animation: modalSlideIn 0.3s ease;
+}
+#create_event_modal,
+#update_event_modal,
+#profile_modal {
+  animation: fadeIn 0.2s ease;
+}
+
+
+/* ===== Table Row Hover ===== */
+tbody tr {
+  transition: background-color 0.2s ease;
+}
+tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* ===== Chat Messages Scroll ===== */
+#chat_messages {
+  scroll-behavior: smooth;
+}
+
+/* ===== Loading Spinner ===== */
+.loading-spinner {
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+/* ===== Toast Notifications ===== */
+#toast_container > div {
+  animation: toastSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Pulse Animation for Live Elements ===== */
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* ===== Keyframe Animations ===== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Skeleton Loading ===== */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* ===== Link Underline Effect ===== */
+a, .underline-effect {
+  position: relative;
+}
+a::after, .underline-effect::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s ease;
+}
+a:hover::after, .underline-effect:hover::after {
+  width: 100%;
+}
+
+
+/* ===== Focus Ring for Accessibility ===== */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ===== Smooth Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ===== Selection Color ===== */
+::selection {
+  background: #3b82f6;
+  color: white;
 }
 </style>
 

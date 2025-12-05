@@ -5,6 +5,14 @@ api:
 entryPoints:
   web:
     address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
   traefik:
     address: ":8080"
 
@@ -13,9 +21,23 @@ providers:
     swarmMode: true
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
+    network: traefik-public
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@uniconn.ca
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
 
 metrics:
   prometheus:
     addEntryPointsLabels: true
     addServicesLabels: true
     entryPoint: "traefik"
+
+log:
+  level: INFO
+
+accessLog: {}

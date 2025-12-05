@@ -1,23 +1,22 @@
 version: "3.9"
 
+# Local Traefik for swarm testing - NO HTTPS
 services:
   traefik:
     image: traefik:v2.11
     command:
       - "--providers.docker.swarmMode=true"
       - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=traefik-public"
       - "--entrypoints.web.address=:80"
       - "--api.dashboard=true"
       - "--api.insecure=true"
-      - "--metrics.prometheus=true"
-      - "--metrics.prometheus.addEntryPointsLabels=true"
-      - "--metrics.prometheus.addServicesLabels=true"
+      - "--log.level=DEBUG"
     ports:
       - "80:80"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
     deploy:
       placement:
         constraints:
@@ -28,3 +27,4 @@ services:
 networks:
   traefik-public:
     external: true
+
