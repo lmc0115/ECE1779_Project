@@ -445,6 +445,12 @@ async function openEventDetail(eventId, role) {
 
   const isOwner = (user.role === "organizer" && user.id === ev.organizer_id);
 
+  // Hide RSVP stats panel by default (will be shown only for owner)
+  const statsPanel = document.getElementById("event_stats_panel");
+  if (statsPanel) {
+    statsPanel.classList.add("hidden");
+  }
+
   document.getElementById("event_detail_content").innerHTML = `
     <h2 class="text-3xl font-bold mb-2">${ev.title}</h2>
     <p class="text-gray-600">${new Date(ev.start_time).toLocaleString()}</p>
