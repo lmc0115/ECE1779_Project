@@ -9,6 +9,7 @@ const eventRoutes = require("./routes/events");
 const commentsRoutes = require("./routes/comments");
 const rsvpsRoutes = require("./routes/rsvps");
 const healthRoutes = require("./routes/health");
+const { metricsMiddleware } = require("./routes/health");
 const analyticsRoutes = require("./routes/analytics");
 
 const app = express();
@@ -37,6 +38,7 @@ app.use(helmet({
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(metricsMiddleware); // Track HTTP request duration for Prometheus
 
 // API Routes
 app.use("/api/auth", authRoutes);
