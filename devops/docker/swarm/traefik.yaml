@@ -39,13 +39,6 @@ services:
       placement:
         constraints:
           - node.role == manager
-      labels:
-        - "traefik.enable=true"
-        # Security headers middleware
-        - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
-        - "traefik.http.middlewares.security-headers.headers.browserXssFilter=true"
-        - "traefik.http.middlewares.security-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
-        - "traefik.http.middlewares.security-headers.headers.frameDeny=true"
     networks:
       - traefik-public
 

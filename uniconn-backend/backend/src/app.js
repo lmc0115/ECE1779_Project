@@ -13,22 +13,26 @@ const analyticsRoutes = require("./routes/analytics");
 
 const app = express();
 
-// Security headers - configured to allow inline scripts for frontend
+// Security headers - configured for HTTP (no HTTPS)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com", "https://cdn.socket.io", "https://cdn.jsdelivr.net"],
-      scriptSrcAttr: ["'unsafe-inline'"],  // Allow inline event handlers (onclick, etc.)
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", "ws:", "wss:", "http:", "https:"],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
-      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+      upgradeInsecureRequests: null, // IMPORTANT: Disable auto-upgrade to HTTPS
     },
   },
+  hsts: false, // IMPORTANT: Disable HSTS (HTTP Strict Transport Security) for HTTP-only deployments
   crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
+  originAgentCluster: false,
 }));
 app.use(cors());
 app.use(express.json());

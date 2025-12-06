@@ -24,7 +24,11 @@ services:
         # HTTP Router
         - "traefik.http.routers.uniconn.rule=PathPrefix(`/`)"
         - "traefik.http.routers.uniconn.entrypoints=web"
-        - "traefik.http.routers.uniconn.middlewares=security-headers@docker"
+        # Security headers middleware (defined inline)
+        - "traefik.http.middlewares.uniconn-headers.headers.contentTypeNosniff=true"
+        - "traefik.http.middlewares.uniconn-headers.headers.browserXssFilter=true"
+        - "traefik.http.middlewares.uniconn-headers.headers.frameDeny=true"
+        - "traefik.http.routers.uniconn.middlewares=uniconn-headers"
         # Load balancer
         - "traefik.http.services.uniconn.loadbalancer.server.port=8080"
         - "traefik.http.services.uniconn.loadbalancer.sticky.cookie=true"
@@ -58,7 +62,6 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_DB_FILE: /run/secrets/uniconn_postgres_db
       POSTGRES_USER_FILE: /run/secrets/uniconn_postgres_user
       POSTGRES_PASSWORD_FILE: /run/secrets/uniconn_postgres_password
@@ -75,7 +78,7 @@ services:
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 30s
       timeout: 10s
       retries: 5
