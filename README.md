@@ -26,6 +26,63 @@ Besides the reliable state management, the platform will also be deployed follow
 Furthermore, the system will integrate observability and monitoring functions through combined dashboards depicting major performance metrics such as CPU utilization, memory usage, API latency, and database utilization. The monitoring facilities will facilitate enhanced transparency, proactive debugging, as well as maintain the platform's reliability and performance during its cloud migrations.
 
 
+## Technical Stack
+
+UniConn is built using modern, cloud-native technologies designed for scalability, reliability, and maintainability.
+
+**Backend**
+
+**Node.js + Express.js**
+Provides a lightweight and efficient RESTful API framework for handling event management, user authentication, and real-time interactions.
+
+**Socket.io**
+Enables real-time bidirectional communication for live event updates and collaborative features such as instant notifications and WebSocket-based interactions.
+
+**PostgreSQL 16**
+Stores all event data, user profiles, RSVPs, comments, and authentication records with ACID compliance and relational integrity. Integrated with DigitalOcean Volumes for persistent data storage across container restarts and deployments.
+
+**JWT (JSON Web Tokens) + bcrypt**
+Implements secure authentication and role-based access control. JWT tokens manage user sessions, while bcrypt ensures password security through hashing.
+
+**SendGrid API**
+Handles automated email notifications for RSVP confirmations, event reminders, and event updates to keep users informed.
+
+**Monitoring & Observability**
+
+**Prometheus + Grafana**
+Provides comprehensive system monitoring with custom dashboards tracking CPU usage, memory consumption, API latency, request rates, and database performance. Prometheus collects metrics from the application, Traefik, and system exporters.
+
+**Traefik**
+Acts as a reverse proxy and load balancer with built-in service discovery, automatic HTTPS, and Prometheus metrics integration for traffic monitoring and routing.
+
+**DigitalOcean Monitoring**
+Complements the self-hosted monitoring stack with cloud provider metrics and alerting for infrastructure health.
+
+**Containerization & Orchestration**
+
+**Docker + Docker Compose**
+Containerizes all services (API, PostgreSQL) for consistent local development and testing environments.
+
+**Docker Swarm (on DigitalOcean)**
+Orchestrates production deployment with automatic service replication, load balancing, and rolling updates. Chosen over Kubernetes for its simplicity and built-in integration with Docker, making it ideal for medium-scale deployments while maintaining cloud-native scalability.
+
+**CI/CD & DevOps**
+
+**GitHub Actions**
+Automates build, test, and deployment pipelines to ensure code quality and streamline releases.
+
+**Other Key Technologies**
+
+**Helmet.js**
+Enhances API security by setting HTTP headers that protect against common web vulnerabilities.
+
+**prom-client**
+Exposes application-level metrics (request duration, error rates) to Prometheus for observability.
+
+**dotenv**
+Manages environment variables and secrets securely across development and production environments.
+
+
 ## Key Features
 
 | Objective | Key Features / Implementation | Description |
