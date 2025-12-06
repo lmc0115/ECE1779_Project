@@ -2,7 +2,7 @@ version: "3.9"
 
 # =============================================================================
 # Monitoring Stack: Prometheus + Grafana + Node Exporter
-# Access: http://YOUR_IP:9090 (Prometheus) | http://YOUR_IP:3000 (Grafana)
+# Access: http://143.198.39.167:9090 (Prometheus) | http://143.198.39.167:3000 (Grafana)
 # Default Grafana login: admin / admin (change on first login)
 # =============================================================================
 

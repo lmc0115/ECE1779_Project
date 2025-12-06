@@ -3,7 +3,7 @@ version: "3.9"
 # =============================================================================
 # Traefik Reverse Proxy Stack
 # Provides: Load balancing, routing, security headers, metrics
-# Access: http://YOUR_SERVER_IP (app) | http://YOUR_SERVER_IP:8080 (dashboard)
+# Access: http://143.198.39.167 (app) | http://143.198.39.167 (dashboard)
 # =============================================================================
 
 services:
