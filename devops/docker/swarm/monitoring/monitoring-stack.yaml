@@ -1,0 +1,67 @@
+version: "3.9"
+
+# =============================================================================
+# Monitoring Stack: Prometheus + Grafana + Node Exporter
+# Access: http://143.198.39.167:9090 (Prometheus) | http://143.198.39.167:3000 (Grafana)
+# Default Grafana login: admin / admin (change on first login)
+# =============================================================================
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - traefik-public
+      - uniconn_internal
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
+    ports:
+      - "9100:9100"
+    deploy:
+      mode: global
+    networks:
+      - uniconn_internal
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - traefik-public
+      - uniconn_internal
+
+networks:
+  traefik-public:
+    external: true
+  uniconn_internal:
+    external: true
+
+volumes:
+  prometheus-data:
+  grafana-data:

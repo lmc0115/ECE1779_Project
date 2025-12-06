@@ -1,23 +1,40 @@
 version: "3.9"
 
+# =============================================================================
+# Traefik Reverse Proxy Stack
+# Provides: Load balancing, routing, security headers, metrics
+# Access: http://143.198.39.167 (app) | http://143.198.39.167 (dashboard)
+# =============================================================================
+
 services:
   traefik:
     image: traefik:v2.11
     command:
+      # Docker Swarm provider
       - "--providers.docker.swarmMode=true"
       - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=traefik-public"
+      
+      # HTTP entrypoint
       - "--entrypoints.web.address=:80"
+      
+      # Dashboard
       - "--api.dashboard=true"
       - "--api.insecure=true"
+      
+      # Prometheus metrics
       - "--metrics.prometheus=true"
       - "--metrics.prometheus.addEntryPointsLabels=true"
       - "--metrics.prometheus.addServicesLabels=true"
+      
+      # Logging
+      - "--log.level=INFO"
+      - "--accesslog=true"
     ports:
       - "80:80"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
     deploy:
       placement:
         constraints:
