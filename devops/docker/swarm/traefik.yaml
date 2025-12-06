@@ -1,5 +1,11 @@
 version: "3.9"
 
+# =============================================================================
+# Traefik Reverse Proxy Stack
+# Provides: Load balancing, routing, security headers, metrics
+# Access: http://YOUR_SERVER_IP (app) | http://YOUR_SERVER_IP:8080 (dashboard)
+# =============================================================================
+
 services:
   traefik:
     image: traefik:v2.11
@@ -9,22 +15,10 @@ services:
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.network=traefik-public"
       
-      # Entry points - HTTP and HTTPS
+      # HTTP entrypoint
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
       
-      # HTTP to HTTPS redirect (force HTTPS)
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-      
-      # Let's Encrypt ACME configuration
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@uniconn.ca}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      
-      # Dashboard and API
+      # Dashboard
       - "--api.dashboard=true"
       - "--api.insecure=true"
       
@@ -38,22 +32,16 @@ services:
       - "--accesslog=true"
     ports:
       - "80:80"
-      - "443:443"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - letsencrypt-data:/letsencrypt
     deploy:
       placement:
         constraints:
           - node.role == manager
       labels:
-        # Security headers middleware
         - "traefik.enable=true"
-        - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
-        - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
-        - "traefik.http.middlewares.security-headers.headers.stsPreload=true"
-        - "traefik.http.middlewares.security-headers.headers.forceSTSHeader=true"
+        # Security headers middleware
         - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
         - "traefik.http.middlewares.security-headers.headers.browserXssFilter=true"
         - "traefik.http.middlewares.security-headers.headers.referrerPolicy=strict-origin-when-cross-origin"
@@ -65,5 +53,3 @@ networks:
   traefik-public:
     external: true
 
-volumes:
-  letsencrypt-data:

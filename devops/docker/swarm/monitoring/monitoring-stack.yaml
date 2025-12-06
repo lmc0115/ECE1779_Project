@@ -1,5 +1,11 @@
 version: "3.9"
 
+# =============================================================================
+# Monitoring Stack: Prometheus + Grafana + Node Exporter
+# Access: http://YOUR_IP:9090 (Prometheus) | http://YOUR_IP:3000 (Grafana)
+# Default Grafana login: admin / admin (change on first login)
+# =============================================================================
+
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -17,8 +23,8 @@ services:
         constraints:
           - node.role == manager
     networks:
-      - uniconn_internal
       - traefik-public
+      - uniconn_internal
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -47,13 +53,13 @@ services:
         constraints:
           - node.role == manager
     networks:
-      - uniconn_internal
       - traefik-public
+      - uniconn_internal
 
 networks:
-  uniconn_internal:
-    external: true
   traefik-public:
+    external: true
+  uniconn_internal:
     external: true
 
 volumes:
