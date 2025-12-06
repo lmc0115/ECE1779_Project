@@ -65,4 +65,3 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
-
