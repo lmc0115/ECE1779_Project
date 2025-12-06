@@ -55,4 +55,40 @@ router.post("/:eventId/comments", authRequired, async (req, res) => {
   }
 });
 
+// DELETE /api/events/:eventId/comments/:commentId
+router.delete("/:eventId/comments/:commentId", authRequired, async (req, res) => {
+  try {
+    const eventId = Number(req.params.eventId);
+    const commentId = Number(req.params.commentId);
+
+    // Check if comment exists and belongs to the user (or user is organizer of the event)
+    const comment = await db.query(
+      `SELECT c.*, e.organizer_id 
+       FROM comments c 
+       JOIN events e ON c.event_id = e.id 
+       WHERE c.id = $1 AND c.event_id = $2`,
+      [commentId, eventId]
+    );
+
+    if (comment.rows.length === 0) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    // Only allow deletion if user is the comment author or the event organizer
+    const isAuthor = comment.rows[0].user_id === req.user.id;
+    const isOrganizer = comment.rows[0].organizer_id === req.user.id;
+
+    if (!isAuthor && !isOrganizer) {
+      return res.status(403).json({ error: "Not authorized to delete this comment" });
+    }
+
+    await db.query("DELETE FROM comments WHERE id = $1", [commentId]);
+
+    res.json({ message: "Comment deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 module.exports = router;
