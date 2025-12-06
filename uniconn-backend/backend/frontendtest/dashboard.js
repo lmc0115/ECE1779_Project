@@ -13,7 +13,7 @@ function formatRSVPStatus(status) {
 if (window.location.protocol === 'file:') {
   document.body.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif;background:#f3f4f6;padding:20px;text-align:center;">
-      <h1 style="color:#dc2626;font-size:2rem;margin-bottom:1rem;">⚠️ Cannot Open Directly</h1>
+      <h1 style="color:#dc2626;font-size:2rem;margin-bottom:1rem;">Cannot Open Directly</h1>
       <p style="color:#4b5563;font-size:1.1rem;max-width:500px;margin-bottom:1.5rem;">
         This file cannot be opened directly from the file system.<br>
         Please access it through the server.
@@ -613,7 +613,21 @@ async function openEventDetail(eventId, role) {
 
   // show chat panel
   document.getElementById("event_chat_panel").classList.remove("hidden");
-  document.getElementById("chat_messages").innerHTML = "";
+  document.getElementById("chat_messages").innerHTML = `
+    <div id="chat_welcome" class="text-center py-8">
+      <div class="w-14 h-14 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
+        <svg class="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+      </div>
+      <p class="text-gray-600 text-sm">Welcome to the chat room!</p>
+      <p class="text-gray-400 text-xs mt-1">Messages will appear here in real-time</p>
+    </div>
+  `;
+  
+  // Reset room count
+  const countEl = document.getElementById("room_user_count");
+  if (countEl) countEl.textContent = "1";
 
   currentEventRoom = eventId;
 
@@ -1100,39 +1114,77 @@ function initWebSocket() {
   });
 
   socket.on("chat:new", (msg) => {
+    // Clear welcome message if it exists
+    const welcome = document.getElementById("chat_welcome");
+    if (welcome) welcome.remove();
+    
+    const isMe = user && msg.user.id === user.id;
     appendChatMessage(`
-      <div class="mb-2">
-        <span class="font-semibold">${msg.user.name}:</span>
-        <span>${msg.message}</span>
-        <div class="text-xs text-gray-400">${new Date(msg.ts).toLocaleTimeString()}</div>
+      <div class="chat-message mb-3 flex ${isMe ? 'justify-end' : 'justify-start'}">
+        <div class="max-w-[75%]">
+          <div class="${isMe 
+            ? 'bg-blue-600 text-white rounded-xl rounded-br-sm' 
+            : 'bg-white border border-gray-200 text-gray-800 rounded-xl rounded-bl-sm'} px-4 py-2 shadow-sm">
+            ${!isMe ? `<div class="text-blue-600 text-xs font-semibold mb-1">${msg.user.name}</div>` : ''}
+            <div class="text-sm">${msg.message}</div>
+          </div>
+          <div class="text-gray-400 text-xs mt-1 ${isMe ? 'text-right' : ''}">${new Date(msg.ts).toLocaleTimeString()}</div>
+        </div>
       </div>
     `);
   });
 
   socket.on("chat:typing", (userTyping) => {
     const el = document.getElementById("chat_typing");
-    if (!el) return;
+    const userEl = document.getElementById("typing_user");
+    if (!el || !userEl) return;
 
-    el.textContent = `${userTyping.name} is typing...`;
+    userEl.textContent = `${userTyping.name} is typing...`;
     el.classList.remove("hidden");
 
     setTimeout(() => el.classList.add("hidden"), 1500);
   });
 
-  socket.on("user:joined", ({ user }) => {
+  socket.on("user:joined", ({ user: joinedUser }) => {
+    // Clear welcome message if it exists
+    const welcome = document.getElementById("chat_welcome");
+    if (welcome) welcome.remove();
+    
     appendChatMessage(`
-      <div class="text-center text-gray-500 text-xs mb-2">
-        ${user.name} joined the chat
+      <div class="chat-system-message text-center py-2 mb-2">
+        <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
+          </svg>
+          ${joinedUser.name} joined
+        </span>
       </div>
     `);
   });
 
-  socket.on("user:left", ({ user }) => {
+  socket.on("user:left", ({ user: leftUser }) => {
     appendChatMessage(`
-      <div class="text-center text-gray-500 text-xs mb-2">
-        ${user.name} left the chat
+      <div class="chat-system-message text-center py-2 mb-2">
+        <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+          ${leftUser.name} left
+        </span>
       </div>
     `);
+  });
+
+  socket.on("room:count", ({ eventId, count }) => {
+    if (currentEventRoom && eventId == currentEventRoom) {
+      const countEl = document.getElementById("room_user_count");
+      if (countEl) {
+        countEl.textContent = count;
+        // Add a little pulse animation
+        countEl.parentElement.classList.add("scale-110");
+        setTimeout(() => countEl.parentElement.classList.remove("scale-110"), 200);
+      }
+    }
   });
 }
 
@@ -1229,13 +1281,33 @@ function renderEventComments(comments) {
   }
 
   list.innerHTML = comments
-    .map(c => `
-      <div class="border-b pb-2">
-        <div class="text-sm"><span class="font-semibold">${c.author_name}</span></div>
-        <div class="text-gray-800 text-sm mt-1">${c.body}</div>
-        <div class="text-xs text-gray-400 mt-1">${new Date(c.created_at).toLocaleString()}</div>
-      </div>
-    `)
+    .map(c => {
+      const isOwner = user && c.author_name === user.name;
+      return `
+        <div class="border-b pb-3 mb-3 group" id="comment-${c.id}">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                ${c.author_name.charAt(0).toUpperCase()}
+              </div>
+              <span class="font-semibold text-gray-800">${c.author_name}</span>
+              ${isOwner ? '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">You</span>' : ''}
+            </div>
+            ${isOwner ? `
+              <button onclick="deleteComment(${c.id})" 
+                class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-all duration-200" 
+                title="Delete comment">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            ` : ''}
+          </div>
+          <div class="text-gray-700 text-sm mt-2 ml-10">${c.body}</div>
+          <div class="text-xs text-gray-400 mt-1 ml-10">${new Date(c.created_at).toLocaleString()}</div>
+        </div>
+      `;
+    })
     .join("");
 }
 
@@ -1248,15 +1320,60 @@ function appendCommentToList(comment) {
     list.innerHTML = "";
   }
 
+  const isOwner = user && comment.author_name === user.name;
   const html = `
-    <div class="border-b pb-2">
-      <div class="text-sm"><span class="font-semibold">${comment.author_name}</span></div>
-      <div class="text-gray-800 text-sm mt-1">${comment.body}</div>
-      <div class="text-xs text-gray-400 mt-1">${new Date(comment.created_at).toLocaleString()}</div>
+    <div class="border-b pb-3 mb-3 group animate-fadeIn" id="comment-${comment.id}">
+      <div class="flex justify-between items-start">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+            ${comment.author_name.charAt(0).toUpperCase()}
+          </div>
+          <span class="font-semibold text-gray-800">${comment.author_name}</span>
+          ${isOwner ? '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">You</span>' : ''}
+        </div>
+        ${isOwner ? `
+          <button onclick="deleteComment(${comment.id})" 
+            class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-all duration-200" 
+            title="Delete comment">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        ` : ''}
+      </div>
+      <div class="text-gray-700 text-sm mt-2 ml-10">${comment.body}</div>
+      <div class="text-xs text-gray-400 mt-1 ml-10">${new Date(comment.created_at).toLocaleString()}</div>
     </div>
   `;
 
   list.innerHTML += html;
+}
+
+async function deleteComment(commentId) {
+  if (!confirm("Are you sure you want to delete this comment?")) return;
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/events/${currentEventRoom}/comments/${commentId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    if (res.ok) {
+      const commentEl = document.getElementById(`comment-${commentId}`);
+      if (commentEl) {
+        commentEl.style.opacity = '0';
+        commentEl.style.transform = 'translateX(-20px)';
+        setTimeout(() => commentEl.remove(), 300);
+      }
+      showToast("Comment deleted", "success");
+    } else {
+      const data = await res.json();
+      showToast(data.error || "Failed to delete comment", "error");
+    }
+  } catch (err) {
+    console.error("Delete comment error:", err);
+    showToast("Failed to delete comment", "error");
+  }
 }
 
 async function submitComment() {
