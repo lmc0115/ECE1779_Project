@@ -1,0 +1,105 @@
+version: "3.9"
+
+# =============================================================================
+# UniConn Application Stack
+# Includes: API (3 replicas) + PostgreSQL Database
+# Uses: Docker Secrets for sensitive data
+# =============================================================================
+
+services:
+
+  api:
+    image: 143.198.39.167:5000/uniconn-api:latest
+    deploy:
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      labels:
+        - "traefik.enable=true"
+        # HTTP Router
+        - "traefik.http.routers.uniconn.rule=PathPrefix(`/`)"
+        - "traefik.http.routers.uniconn.entrypoints=web"
+        # Security headers middleware (defined inline)
+        - "traefik.http.middlewares.uniconn-headers.headers.contentTypeNosniff=true"
+        - "traefik.http.middlewares.uniconn-headers.headers.browserXssFilter=true"
+        - "traefik.http.middlewares.uniconn-headers.headers.frameDeny=true"
+        - "traefik.http.routers.uniconn.middlewares=uniconn-headers"
+        # Load balancer
+        - "traefik.http.services.uniconn.loadbalancer.server.port=8080"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie.name=uniconn_session"
+        - "traefik.http.services.uniconn.loadbalancer.sticky.cookie.httpOnly=true"
+        # Health check
+        - "traefik.http.services.uniconn.loadbalancer.healthcheck.path=/api/health"
+        - "traefik.http.services.uniconn.loadbalancer.healthcheck.interval=30s"
+        - "traefik.http.services.uniconn.loadbalancer.healthcheck.timeout=5s"
+    networks:
+      - traefik-public
+      - internal
+    environment:
+      POSTGRES_HOST: db
+      NODE_ENV: production
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:-noreply@uniconn.ca}
+      USE_DOCKER_SECRETS: "true"
+    secrets:
+      - uniconn_postgres_db
+      - uniconn_postgres_user
+      - uniconn_postgres_password
+      - uniconn_jwt_secret
+      - uniconn_sendgrid_api_key
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB_FILE: /run/secrets/uniconn_postgres_db
+      POSTGRES_USER_FILE: /run/secrets/uniconn_postgres_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/uniconn_postgres_password
+    secrets:
+      - uniconn_postgres_db
+      - uniconn_postgres_user
+      - uniconn_postgres_password
+    volumes:
+      - /mnt/volume_uniconn_01/postgresql/data:/var/lib/postgresql/data
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  traefik-public:
+    external: true
+  internal:
+    driver: overlay
+    name: uniconn_internal
+    attachable: true
+
+secrets:
+  uniconn_postgres_db:
+    external: true
+  uniconn_postgres_user:
+    external: true
+  uniconn_postgres_password:
+    external: true
+  uniconn_jwt_secret:
+    external: true
+  uniconn_sendgrid_api_key:
+    external: true
+
