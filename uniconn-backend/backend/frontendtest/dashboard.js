@@ -13,7 +13,7 @@ function formatRSVPStatus(status) {
 if (window.location.protocol === 'file:') {
   document.body.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif;background:#f3f4f6;padding:20px;text-align:center;">
-      <h1 style="color:#dc2626;font-size:2rem;margin-bottom:1rem;">Cannot Open Directly</h1>
+      <h1 style="color:#dc2626;font-size:2rem;margin-bottom:1rem;">⚠️ Cannot Open Directly</h1>
       <p style="color:#4b5563;font-size:1.1rem;max-width:500px;margin-bottom:1.5rem;">
         This file cannot be opened directly from the file system.<br>
         Please access it through the server.
@@ -171,6 +171,7 @@ function openProfileModal() {
 
   // Update profile info
   document.getElementById('profile_name').textContent = user.name;
+  document.getElementById('profile_name_display').textContent = user.name;
   document.getElementById('profile_email').textContent = user.email;
   document.getElementById('profile_role').textContent = user.role;
   document.getElementById('profile_id').textContent = `#${user.id}`;
@@ -190,12 +191,94 @@ function openProfileModal() {
     }
   }
 
+  // Make sure view mode is shown and edit mode is hidden
+  document.getElementById('profile_view_mode').classList.remove('hidden');
+  document.getElementById('profile_edit_mode').classList.add('hidden');
+  document.getElementById('profile_error').classList.add('hidden');
+
   // Show modal
   document.getElementById('profile_modal').classList.remove('hidden');
 }
 
 function closeProfileModal() {
   document.getElementById('profile_modal').classList.add('hidden');
+}
+
+function toggleEditProfile() {
+  const viewMode = document.getElementById('profile_view_mode');
+  const editMode = document.getElementById('profile_edit_mode');
+  const errorEl = document.getElementById('profile_error');
+  
+  errorEl.classList.add('hidden');
+  
+  if (viewMode.classList.contains('hidden')) {
+    // Switch to view mode
+    viewMode.classList.remove('hidden');
+    editMode.classList.add('hidden');
+  } else {
+    // Switch to edit mode - populate fields
+    document.getElementById('profile_edit_name').value = user.name;
+    document.getElementById('profile_edit_email').value = user.email;
+    viewMode.classList.add('hidden');
+    editMode.classList.remove('hidden');
+  }
+}
+
+async function saveProfile() {
+  const errorEl = document.getElementById('profile_error');
+  const nameInput = document.getElementById('profile_edit_name');
+  const emailInput = document.getElementById('profile_edit_email');
+  
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  
+  // Validation
+  if (!name || !email) {
+    errorEl.textContent = 'Name and email are required';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  
+  if (!email.includes('@')) {
+    errorEl.textContent = 'Please enter a valid email address';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ name, email })
+    });
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+      errorEl.textContent = data.error || 'Failed to update profile';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    
+    // Update succeeded - update local user and token
+    user = data.user;
+    token = data.token;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    // Update UI
+    updateUserAvatars();
+    openProfileModal(); // Re-render modal with new data
+    
+    showToast('Profile updated successfully!', 'success');
+  } catch (err) {
+    console.error('Profile update error:', err);
+    errorEl.textContent = 'Failed to update profile';
+    errorEl.classList.remove('hidden');
+  }
 }
 
 function updateUserAvatars() {

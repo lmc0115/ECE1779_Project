@@ -86,4 +86,49 @@ router.get("/me", authRequired, async (req, res) => {
   }
 });
 
+// PUT /api/auth/profile
+router.put("/profile", authRequired, async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    
+    // Validation
+    if (!name || !email) {
+      return res.status(400).json({ error: "Name and email are required" });
+    }
+    
+    if (!email.includes("@")) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+    
+    // Check if email is already taken by another user
+    const emailCheck = await db.query(
+      "SELECT id FROM users WHERE email=$1 AND id != $2",
+      [email, req.user.id]
+    );
+    
+    if (emailCheck.rows.length > 0) {
+      return res.status(409).json({ error: "Email already in use by another account" });
+    }
+    
+    // Update user profile
+    const result = await db.query(
+      `UPDATE users 
+       SET name=$1, email=$2 
+       WHERE id=$3 
+       RETURNING id, email, name, role, created_at`,
+      [name, email, req.user.id]
+    );
+    
+    const updatedUser = result.rows[0];
+    
+    // Issue new token with updated info
+    const token = signToken(updatedUser);
+    
+    res.json({ user: updatedUser, token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 module.exports = router;
