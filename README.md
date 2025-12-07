@@ -160,3 +160,10 @@ Manages environment variables and secrets securely across development and produc
 * **Scalable and monitored** application running on Docker Swarm.
 
 * Integrated **notification and collaboration** features (comments, RSVP, etc.).
+
+
+## Individual Contributions
+
+**Spiro Li**
+
+Spiro implemented the JWT-based authentication system with login, registration, and role-based access control, and developed the SendGrid notification service that automatically sends email confirmations for user registrations, event creation/updates, and RSVP confirmations. He also designed and implemented the RESTful API architecture with Express.js, including all event, comment, and RSVP endpoints with proper validation, and integrated WebSocket real-time functionality using Socket.io to broadcast live updates for events, comments, and RSVPs to connected clients.
