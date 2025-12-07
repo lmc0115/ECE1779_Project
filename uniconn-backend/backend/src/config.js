@@ -27,6 +27,7 @@ const postgresUser = readSecret("uniconn_postgres_user", "POSTGRES_USER", "unico
 const postgresPassword = readSecret("uniconn_postgres_password", "POSTGRES_PASSWORD", "");
 const jwtSecret = readSecret("uniconn_jwt_secret", "JWT_SECRET", "dev-secret-change-me");
 const sendgridApiKey = readSecret("uniconn_sendgrid_api_key", "SENDGRID_API_KEY", "");
+const sendgridFromEmail = readSecret("uniconn_sendgrid_from_email", "SENDGRID_FROM_EMAIL", "noreply@uniconn.ca");
 
 // Build database URL
 function buildDatabaseUrl() {
@@ -52,6 +53,6 @@ module.exports = {
   nodeEnv: process.env.NODE_ENV || "development",
   sendgrid: {
     apiKey: sendgridApiKey,
-    fromEmail: process.env.SENDGRID_FROM_EMAIL || "noreply@uniconn.ca"
+    fromEmail: sendgridFromEmail
   }
 };

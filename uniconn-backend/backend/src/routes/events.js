@@ -156,7 +156,16 @@ router.put("/:id", authRequired, requireRole("organizer", "admin"), async (req, 
 
     if (!result.rows[0]) return res.status(404).json({ error: "Not found" });
 
-    const event = result.rows[0];
+    // Re-fetch with organizer_name for complete event data
+    const fullResult = await db.query(
+      `SELECT e.*, u.name AS organizer_name
+       FROM events e
+       JOIN users u ON e.organizer_id = u.id
+       WHERE e.id=$1`,
+      [id]
+    );
+
+    const event = fullResult.rows[0];
 
     notificationService.notifyEventUpdated(event).catch(console.error);
 
