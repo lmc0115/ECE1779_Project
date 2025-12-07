@@ -8,61 +8,62 @@
 
 # 1.0 Motivation
 
-At the University of Toronto, news about campus activities and student life, including workshops, career fairs, and networking events, is disseminated across various platforms. This disintegrated communication framework, with **scattered event and activity details**, confuses students because they struggle to stay informed about events that align with their interests. Although there are some current solutions for event integration, such as Quercus announcements and social media by event organizations, they have **significant shortcomings**. Quercus pages are limited to university-based activities, while social media pages are spread across multiple accounts that are still difficult to follow up with. Due to the inconvenience, most students miss opportunities to be part of the wider campus life, as they often overlook extracurricular activities that can enhance their university experience. Meanwhile, some organizations struggle to attract students and expand their business.
+At the University of Toronto, information about workshops, career fairs, networking sessions, and other campus activities is scattered across multiple platforms. This fragmented communication makes it difficult for students to stay informed and often leads to missed opportunities. Existing channels such as Quercus announcements and social media pages remain limited or inconsistent, offering no unified way to explore events across campus.
 
-To address the communication gap between students and event organizations, the team plans to develop a tool that integrates fragmented event and activity information at UofT, providing students and event organizers with a better experience for attending and hosting events. Therefore, University Connection (UniConn) is proposed as a **centralized,** **cloud-based platform** that consolidates all UofT-related events into a single, accessible, and user-friendly interface. The proposed solution, UniConn, aims to minimize the loss of communication caused by the current scattered event information.
+To address this gap, the team proposes **University Connection (UniConn)**—a **centralized, cloud-based platform** that consolidates all UofT-related events into a single, accessible interface. UniConn serves two primary user groups: **students**, who gain an organized and interactive way to browse and engage with events, and **event organizers**, who receive streamlined tools to publish events, reach audiences, and view registration insights. This dual-role design fosters clearer communication and strengthens connections between students and campus organizations.
 
-The **target users** for UniConn can be separated and authenticated by two groups: **Students** who are actively seeking organized access to campus events, and **event organizers** who require a streamlined and interactive platform to reach their audiences more effectively. The system will enable users with different roles to engage in effective and comprehensive interactions. For **event organizers**, such as departments and organizations, UniConn will enable them to publish event details and tally the registration statistics for the events in a dashboard format. For **Students**, UniConn will allow them to browse, filter, and interact with events that align with their academic and social interests, fostering a more connected and collaborative campus environment.
-
-By centralizing event and activity information, UniConn significantly improves communication efficiency, accessibility, and community engagement within the university ecosystem. Beyond its practical impact, the project also showcases the application of modern cloud-native architecture. The system includes a **Node.js** backend built with **Express.js**, a lightweight **HTML-based** frontend, and **persistent storage** using **PostgreSQL**. Development and testing are supported locally through **Docker Compose**, while cloud deployment leverages **Docker Swarm** orchestration to ensure reliability, performance, and extensibility.
+By centralizing event data, UniConn enhances communication efficiency, accessibility, and community engagement. The platform also demonstrates modern cloud-native engineering, featuring a **Node.js + Express.js** backend, a lightweight **HTML** frontend, and **PostgreSQL** persistent storage. Local development uses **Docker Compose**, while cloud deployment relies on **Docker Swarm** to ensure reliability, scalability, and long-term maintainability.
 
 
 # 2.0 Objective
 
 
-## 2.1 Unify Campus Event Information
+## Centralized Event Aggregation
 
-UniConn’s primary objective is to **centralize all campus event information**. Instead of checking multiple platforms, students can access workshops, career fairs, networking events, and other activities in one place. This reduces confusion, improves visibility, and ensures opportunities are not missed due to fragmented information.
-
-## 2.2 Empower Both Students and Organizers
-
-The platform is designed to **serve both students and organizers with tailored experiences**. Students can easily discover events, manage attendance, and participate in discussions. Organizers—such as clubs, departments, and campus groups—can publish events, reach their audience, and monitor engagement. This dual-role design supports the full event lifecycle from creation to participation.
-
-## 2.3 Promote Real-Time Community Interaction
-
-UniConn aims to foster **live engagement and community interaction** around campus activities. Real-time chat, interest indicators, and instant updates make the platform feel active and social, helping students connect with peers who share similar interests and stay engaged with ongoing events.
-
-## 2.4 Deliver a Reliable and Scalable Service
-
-A key objective is to ensure the system remains **stable, responsive, and fault-tolerant** during high-traffic periods. The implementation supports concurrent users, preserves critical data (accounts, events, RSVPs, comments), and minimizes disruption during updates or migrations.
-
-## 2.5 Enable Transparent System Monitoring
-
-The platform provides **clear visibility into performance and system health**. By exposing metrics, tracking resource usage, and offering health checks, UniConn enables administrators to detect issues early and maintain a high-quality, continuously improving service.
+UniConn’s primary objective is to **centralize all campus event information**. Instead of checking multiple platforms, students can access all kinds of university events in one place. This reduces confusion, improves visibility, and ensures opportunities are not missed due to fragmented information.The platform is designed to **serve both students and organizers with tailored experiences**.
 
 
-# 3.0 Technical Stack (Modify this as reference)
+## Collaborative Engagement and Real-Time Insights
+
+UniConn aims to promote **live engagement and community interaction** around campus activities. Real-time chat, interest indicators, and instant updates make the platform feel active and social, helping students connect with peers who share similar interests and stay engaged with ongoing events.
+
+## Reliable State Management and Data Integrity
+
+UniConn ensures the system remains **stable, responsive, and fault-tolerant** during high-traffic periods. The implementation supports concurrent users, preserves critical data (accounts, events, RSVPs, comments), and minimizes disruption during updates or migrations.
+
+## Cloud-Native Deployment and Scalability
+
+Ensure UniConn can **scale smoothly and stay available**. Containerized services, orchestration, and load balancing let us absorb traffic peaks without downtime, while durable storage preserves event and user data through restarts and upgrades. Secret-managed credentials keep growth secure. The goal is a responsive, resilient platform as adoption increases.
+
+## Observability and System Reliability
+
+UniConn deploys monitoring platforms provides **clear visibility into performance and system health**. By exposing metrics, tracking resource usage, and offering health checks, UniConn enables administrators to detect issues early and maintain a high-quality, continuously improving service.
+
+
+
+# 3.0 Technical Stack
 
 UniConn is built using modern, cloud-native technologies designed for scalability, reliability, and maintainability.
 
-| Category | Technology | Purpose |
-| -------- | ---------- | ------- |
-| **Backend Framework** | Node.js + Express.js | Provides a lightweight and efficient RESTful API framework for handling event management, user authentication, and real-time interactions |
-| **Real-Time Communication** | Socket.io | Enables real-time bidirectional communication for live event updates and collaborative features such as instant notifications and WebSocket-based interactions |
-| **Database** | PostgreSQL 16 | Stores all event data, user profiles, RSVPs, comments, and authentication records with ACID compliance and relational integrity |
-| **Data Persistence** | DigitalOcean Volumes | Ensures persistent data storage across container restarts and deployments |
-| **Authentication** | JWT (JSON Web Tokens) + bcrypt | Implements secure authentication and role-based access control. JWT tokens manage user sessions, while bcrypt ensures password security through hashing |
-| **Email Notifications** | SendGrid API | Handles automated email notifications for RSVP confirmations, event reminders, and event updates to keep users informed |
-| **Metrics Collection** | Prometheus | Collects comprehensive system metrics from the application, Traefik, and system exporters |
-| **Metrics Visualization** | Grafana | Provides custom dashboards tracking CPU usage, memory consumption, API latency, request rates, and database performance |
-| **Reverse Proxy & Load Balancer** | Traefik | Acts as a reverse proxy and load balancer with built-in service discovery, automatic HTTPS, and Prometheus metrics integration for traffic monitoring and routing |
-| **Cloud Monitoring** | DigitalOcean Monitoring | Complements the self-hosted monitoring stack with cloud provider metrics and alerting for infrastructure health |
-| **Containerization** | Docker + Docker Compose | Containerizes all services (API, PostgreSQL) for consistent local development and testing environments |
-| **Orchestration** | Docker Swarm (on DigitalOcean) | Orchestrates production deployment with automatic service replication, load balancing, and rolling updates. Chosen over Kubernetes for its simplicity and built-in integration with Docker, making it ideal for medium-scale deployments while maintaining cloud-native scalability |
-| **CI/CD** | GitHub Actions | Automates build, test, and deployment pipelines to ensure code quality and streamline releases |
-| **Security** | Helmet.js | Enhances API security by setting HTTP headers that protect against common web vulnerabilities |
-| **Metrics Library** | prom-client | Exposes application-level metrics (request duration, error rates) to Prometheus for observability |
-| **Configuration Management** | dotenv | Manages environment variables and secrets securely across development and production environments |
+| **Category** | **Technology** | **Purpose / Description** |
+|--------------|----------------|----------------------------|
+| **Backend** | **Node.js + Express.js** | Provides a lightweight RESTful API for event management, authentication, and real-time features. |
+| | **Socket.io** | Enables real-time bidirectional communication for live updates, event chat, comments, and RSVP broadcasts. |
+| | **PostgreSQL 16** | Stores events, users, RSVPs, comments, and authentication data persistently on a mounted volume in Swarm. |
+| | **JWT + bcrypt** | Secures authentication and role-based access; JWT for sessions, bcrypt for password hashing. |
+| | **SendGrid API** | Sends welcome, RSVP confirmation, and organizer event notifications when credentials are provided. |
+| **Frontend**| **Static HTML/JS frontend** | Ships with a lightweight dashboard UI for exercising the API and real-time features. |
+| **Monitoring & Observability** | **Prometheus + Grafana** | Collects and visualizes metrics on CPU, memory, API latency, request volume, and DB performance. |
+| | **Traefik** | Reverse proxy and load balancer with routing and Prometheus metrics support. |
+| | **DigitalOcean Monitoring** | Provides infrastructure-level metrics and alerting for Droplet performance. |
+| **Containerization & Orchestration** | **Docker + Docker Compose** | Containerizes services for consistent local development and testing. |
+| | **Docker Swarm** | Manages production orchestration, service replication, load balancing, and rolling updates. |
+| **Security & Configuration** | **Docker Secrets** | Injects database, JWT, and email credentials at runtime without turning them into images. |
+| | **Helmet.js** | Adds security headers to protect against web vulnerabilities. |
+| | **prom-client** | Exposes application metrics (e.g., request duration, error rates) to Prometheus and shown on Grafana. |
+
+
+
 
 # 4.0 Features
 
@@ -81,7 +82,6 @@ Students explore campus events through a **unified, continuously updated interfa
 - Public comments with self-deletion  
 - Welcome and RSVP emails  
 
-These features give students a single, real-time view of campus activities and easy ways to participate, supporting Objectives **2.1**, **2.2**, and **2.3**.
 
 ### 4.1.2 Organizer Experience
 
@@ -96,7 +96,6 @@ Organizers can **create** events with full metadata and instantly broadcast them
 - Comment moderation  
 - Event creation/update emails  
 
-These tools support Objectives **2.1**, **2.2**, **2.3**, and **2.4**, making event management efficient and interactive.
 
 ### 4.1.3 Shared API and Interaction Features
 
@@ -108,7 +107,6 @@ These shared interactions ensure a consistent, responsive experience aligned wit
 
 UniConn includes operational tools to ensure reliability and observability. A `/api/health` endpoint validates API and database responsiveness, while `/api/metrics` exposes Prometheus-formatted metrics visualized in **Grafana**. **Traefik** provides routing dashboards and logs, and DigitalOcean offers CPU, memory, disk, and network graphs for infrastructure monitoring. Sensitive credentials are managed as secrets, enabling secure rotation without code changes.
 
-Together, these DevOps features support Objectives **2.4 Deliver a Reliable and Scalable Service** and **2.5 Enable Transparent System Monitoring**, ensuring stable performance during development, deployment, and peak usage periods.
 
 
 # 5.0 User Guide
@@ -199,16 +197,7 @@ Together, these DevOps features support Objectives **2.4 Deliver a Reliable and 
 
 [Screenshot: Event card with registration control and status]
 
-.
 
-
-### 5.2.5 Viewing Personal Information and Logging Out
-
-1. At the top of the Student Dashboard, click the **Personal Information / My Profile** bar.  
-2. A modal opens showing the student’s **name**, **email**, and **role**, along with a **Logout** button.  
-3. Review these details to confirm the current account or log out when finished using the system.  
-
-[Screenshot: Student profile modal showing personal information]
 
 
 ## 5.3 Organizer Workflow
@@ -264,30 +253,18 @@ These analytics give organizers feedback on how students are engaging, which sup
 Comment moderation helps maintain a productive discussion environment while still encouraging open communication around events (Objective **2.3**).
 
 
-## 5.4 Shared Real-Time and Cross-Role Features
-
-Regardless of role, all authenticated users share several core interaction patterns:
-
-- **Unified API and event view** – every user sees the same underlying event data, filtered and presented according to their role, satisfying Objective **2.1**.  
-- **Real-time updates** – changes to events, registrations, and comments propagate instantly through WebSocket connections, reinforcing Objective **2.3**.  
-- **Consistent navigation and layout** – both dashboards use similar structures (tabs, cards, modals), reducing learning effort and supporting Objective **2.2** by making the platform approachable for all users.
-
 # 6.0 Development Guide
 
 This section explains how to set up locally for testing and how to deploy to the DigitalOcean Swarm cluster. Quick path: from the project root run `./localcompose.sh` for local testing and `bash devops/scripts/swarmdeploy/redeploy.sh` for cloud deployment. If either script is not executable on Unix/macOS, run `chmod +x <script>` once.
 
-## 6.1 Local Deployment (Testing)
+## 6.1 Local Deployment (`docker compose` Testing)
 
-Option 1: One-step local bring-up  
-1. Run `./localcompose.sh`.  
-2. Script actions (summary):  
-   - Validates Docker is available.  
-   - Brings up API and PostgreSQL via Docker Compose.  
-   - Exposes the app at `http://localhost:8080`.  
-   - Loads the schema automatically on first boot via the initdb hook.  
-   - Provides a simple down command (`docker compose down`) to stop.
+**Option 1**: One-step local bring-up  
+1. Start `docker desktop`
+2. Run `./localcompose.sh`.  
 
-Option 2: Deploy step by step (mirrors the script)  
+
+**Option 2**: Deploy step by step (Mirrors the script)
 1. Ensure Docker Desktop/Engine is running.  
 2. Prepare `.env` with local values (API port 8080, DB name/user/password, JWT secret).  
 3. Start services: `docker compose -f docker-compose.local.yaml up -d` (schema auto-loads the first time via `/docker-entrypoint-initdb.d/schema.sql`).  
@@ -297,53 +274,60 @@ Option 2: Deploy step by step (mirrors the script)
 6. Open `http://localhost:8080` to use the app; test APIs via `http://localhost:8080/api/...`.  
 7. Stop: `docker compose -f docker-compose.local.yaml down` (add `-v` to reset the DB volume).
 
-## 6.2 Cloud Deployment (DigitalOcean Swarm)
+## 6.2 Cloud Deployment (`docker swarm` live app)
 
-Option 1: One-step cloud redeploy  
-1. SSH to the Swarm manager (with the attached DO volume).  
+**Option 1**: One-step cloud redeploy  
+1. SSH to the Swarm manager.  
 2. Run `bash devops/scripts/swarmdeploy/redeploy.sh`.  
-3. Script actions (summary):  
-   - Checks/creates Docker secrets via `create-secrets.sh` if missing.  
-   - Fixes volume permissions for PostgreSQL.  
-   - Builds/pushes images (when configured), then deploys Traefik, UniConn, and monitoring stacks.  
-   - Forces service updates so replicas refresh to the latest image.  
-   - Prints service endpoints (app and monitoring).
 
-Option 2: Deploy step by step (mirrors the script)  
+**Option 2**: Deploy step by step (Mirrors the script)
 1. Ensure secrets exist: run `devops/scripts/swarmdeploy/create-secrets.sh` if needed (see 6.3).  
-2. Confirm the DO volume is mounted (e.g., `/mnt/volume_uniconn_01`) and owned by UID 999 for Postgres data.  
+2. Confirm the Digital Ocean volume is mounted (e.g., `/mnt/volume_uniconn_01`) and owned by UID 999 for Postgres data.  
 3. Deploy Traefik stack: `docker stack deploy -c devops/docker/swarm/traefik.yaml traefik`.  
 4. Deploy app stack: `docker stack deploy -c devops/docker/swarm/uniconn.yaml uniconn`.  
 5. Deploy monitoring stack: `docker stack deploy -c devops/docker/swarm/monitoring/monitoring-stack.yaml monitoring`.  
 6. Verify services: `docker service ls`, `docker service ps uniconn_api`, `docker service logs uniconn_api -f`.  
-7. Test endpoints: `http://<manager-ip>/` for the app, `http://<manager-ip>:8080` for Traefik dashboard (if enabled), `http://<manager-ip>:3000` for Grafana.
+7. Test endpoints: `http://143.198.39.167/` for the app, `http://143.198.39.167:8080` for Traefik dashboard (if enabled), `http://143.198.39.167:3000` for Grafana.
 
 ## 6.3 Environment Variables, Secrets, and First-Time Initialization
 
-- Local `.env` (fill in your own values, no defaults baked in):  
-  - `POSTGRES_DB=`  
-  - `POSTGRES_USER=`  
-  - `POSTGRES_PASSWORD=`  
-  - `JWT_SECRET=`  
-  - `SENDGRID_API_KEY=` (optional)  
-  - `SENDGRID_FROM_EMAIL=` (optional)  
+- Local `.env`:  
+  - `POSTGRES_DB=<db_name>`  
+  - `POSTGRES_USER=<psql_user_name>`  
+  - `POSTGRES_PASSWORD=<psql_password>`  
+  - `JWT_SECRET=<JWT_secret>`  
+  - `SENDGRID_API_KEY= <SENDGRID_API_KEY>`  
+  - `SENDGRID_FROM_EMAIL<SENDGRID_email>=` 
   - `NODE_ENV=development`  
   These feed both Compose and helper scripts such as `localcompose.sh`.
-- Swarm secrets (create once before first deploy): run `devops/scripts/swarmdeploy/create-secrets.sh` on the Swarm manager. It will prompt for `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `JWT_SECRET`, and optional `SENDGRID_API_KEY`, then create the corresponding Docker secrets (`uniconn_postgres_db`, `uniconn_postgres_user`, `uniconn_postgres_password`, `uniconn_jwt_secret`, `uniconn_sendgrid_api_key`, `uniconn_sendgrid_from_email`).
+- Swarm secrets (create once before first deploy): run `devops/scripts/swarmdeploy/create-secrets.sh` on the Swarm manager. It will prompt for `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `JWT_SECRET`,  `SENDGRID_API_KEY`, and `SENDGRID_FROM_EMAIL` then create the corresponding Docker secrets (`uniconn_postgres_db`, `uniconn_postgres_user`, `uniconn_postgres_password`, `uniconn_jwt_secret`, `uniconn_sendgrid_api_key`, `uniconn_sendgrid_from_email`).
 - First-time database initialization in Swarm: once the `uniconn` stack is up and the `db` service is healthy, apply the schema one time:  
   `docker exec -i $(docker ps -q -f name=uniconn_db) psql -U "$(docker secret inspect --format='{{.Spec.Data}}' uniconn_postgres_user | base64 -d)" -d "$(docker secret inspect --format='{{.Spec.Data}}' uniconn_postgres_db | base64 -d)" < uniconn-backend/db/schema.sql`  
-  (Adjust the container name filter if your stack uses a different prefix.) After the schema is loaded, normal deploys reuse the persisted volume without reapplying the file.
+  After the schema is loaded, normal deploys reuse the persisted volume without reapplying the file.
 
 
 # 7.0 Deployment Information
 
 - **UniConn (live)**: `http://143.198.39.167/`  
 - **Grafana dashboard**: `http://143.198.39.167:3000/`
+- **Traefik dashboard**: `http://143.198.39.167:8080`
 
 [Screenshot: Deployed UniConn home]
 [Screenshot: Grafana dashboard overview]
 
-# 8.0 Lessons Learned and Concluding Remarks
+# 8.0 Individual Contributions
+
+**Spiro Li**
+
+Spiro implemented the JWT-based authentication system with login, registration, and role-based access control, and developed the SendGrid notification service that automatically sends email confirmations for user registrations, event creation/updates, and RSVP confirmations. He also designed and implemented the RESTful API architecture with Express.js, including all event, comment, and RSVP endpoints with proper validation, and integrated WebSocket real-time functionality using Socket.io to broadcast live updates for events, comments, and RSVPs to connected clients.
+
+
+**Jerry Chen**
+Jerry contributed to backend, frontend, and DevOps development. He created the docker-compose setup for local API and frontend testing, deployed the application to the cloud using Docker Swarm, and strengthened observability by redesigning the Grafana dashboard and configuring Prometheus metrics. Jerry implemented the comment-posting logic, built the initial event room UI structure, and enhanced the WebSocket backend for more reliable real-time communication. He also introduced Helmet.js and integrated Traefik to improve the platform’s security and routing reliability.
+
+**Muchen Liu**
+Muchen developed the baseline frontend features, including the login and registration pages, personal information modal, and role-based dashboards. He improved the event room UI, added real-time online user counting through WebSocket updates, and revised backend profile-editing logic to allow users to update their information. He also supported DevOps tasks by helping create deployment .sh scripts and debugging YAML configurations for Traefik and Prometheus.
+# 9.0 Lessons Learned and Concluding Remarks
 
 Building UniConn provided valuable insights into developing and deploying cloud-native applications. One of the most critical lessons was the importance of **clear service boundary definition**. Separating concerns between authentication, event management, comments, RSVPs, and notifications into distinct API routes made the backend modular and maintainable, but required careful planning of inter-service communication patterns and shared database access.
 
@@ -360,5 +344,3 @@ Building UniConn provided valuable insights into developing and deploying cloud-
 Finally, implementing **observability with Prometheus and Grafana** demonstrated that monitoring is not optional—it's essential for understanding system behavior under load, identifying bottlenecks, and maintaining reliability. Exposing custom metrics (request duration, error rates) alongside infrastructure metrics provided actionable insights for optimization.
 
 Overall, UniConn successfully demonstrated how modern cloud-native technologies can solve real-world problems. The project reinforced that building scalable, reliable systems requires not just writing code, but thoughtfully designing architectures, carefully managing state, and implementing comprehensive testing and monitoring. The hands-on experience with Docker Swarm, PostgreSQL, WebSockets, and DevOps practices provided practical skills directly applicable to industry cloud deployments, while delivering a functional platform that addresses genuine communication gaps in university campus life.
-
-

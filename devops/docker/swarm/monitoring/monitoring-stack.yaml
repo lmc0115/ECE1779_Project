@@ -45,6 +45,8 @@ services:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - /home/uniconn/uniconn-deploy/ECE1779_PROJECT/devops/docker/swarm/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
