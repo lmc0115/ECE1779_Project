@@ -44,7 +44,6 @@ services:
     environment:
       POSTGRES_HOST: db
       NODE_ENV: production
-      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:-noreply@uniconn.ca}
       USE_DOCKER_SECRETS: "true"
     secrets:
       - uniconn_postgres_db
@@ -52,6 +51,7 @@ services:
       - uniconn_postgres_password
       - uniconn_jwt_secret
       - uniconn_sendgrid_api_key
+      - uniconn_sendgrid_from_email
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
       interval: 30s
@@ -101,5 +101,7 @@ secrets:
   uniconn_jwt_secret:
     external: true
   uniconn_sendgrid_api_key:
+    external: true
+  uniconn_sendgrid_from_email:
     external: true
 
