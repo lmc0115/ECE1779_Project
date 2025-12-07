@@ -3,8 +3,8 @@
 | ----- | ----- | ----- |
 |Jerry Chen | 1006944899 | jianuojerry.chen@mail.utoronto.ca|
 |Muchen Liu|1006732145 | muchen.liu@mail.utoronto.ca |
-|Spiro Li | | |
-|Weijie Zhu| | |
+|Spiro Li | 1012635427| supeng.li@mail.utoronto.ca|
+|Weijie Zhu|1009310906 | weijie.zhu@mail.utoronto.ca |
 
 # 1.0 Motivation
 
