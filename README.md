@@ -214,7 +214,7 @@ UniConn includes operational tools to ensure reliability and observability. A `/
 |![student](UserGuideSources/personalinfo.png) | ![organizer](UserGuideSources/edit_window.png)|
 
 
-## Student
+## 5.3 Student
 ### 5.3.1 Registering for Events
 
 1. In the **Browse Events** tab, open any event card.  
@@ -239,9 +239,9 @@ UniConn includes operational tools to ensure reliability and observability. A `/
 
 
 
-## 5.3 Organizer Workflow
+## 5.4 Organizer Workflow
 
-### 5.3.1 Creating a New Event
+### 5.4.1 Creating a New Event
 
 1. Log in as an **Organizer** to open the Organizer Dashboard.  
 2. Navigate to the **My Events** or **Manage Events** tab (depending on the UI label).  
@@ -257,7 +257,7 @@ UniConn includes operational tools to ensure reliability and observability. A `/
 |--|
 |![student](UserGuideSources/createevent.png)|
 
-### 5.3.2 Editing and Deleting Events
+### 5.4.2 Editing and Deleting Events
 
 1. In the Organizer Dashboard, open the **My Events** list.  
 2. Select an event owned by the current organizer.  
@@ -268,9 +268,8 @@ UniConn includes operational tools to ensure reliability and observability. A `/
 |--|--|
 |![student](UserGuideSources/modifiytest.png) | ![organizer](UserGuideSources/modifyresult.png)|
 
-Ownership rules ensure that organizers can modify only their own events, which supports Objective **2.2 Empower Both Students and Organizers** and keeps event data reliable (Objective **2.4**).
 
-### 5.3.3 Viewing Registrations and Analytics
+### 5.4.3 Viewing Registrations and Analytics
 
 1. From the Organizer Dashboard, open the **Analytics** or **Overview** section.  
 2. Review key metrics such as:
