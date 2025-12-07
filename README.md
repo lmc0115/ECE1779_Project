@@ -42,21 +42,27 @@ The platform provides **clear visibility into performance and system health**. B
 
 
 # 3.0 Technical Stack (Modify this as reference)
-From a DevOps perspective, the application is fully containerized and orchestrated to meet the course infrastructure requirements while keeping the platform reliable and maintainable. The Node.js/Express API and PostgreSQL database run inside Docker containers, with a local `docker-compose.local.yaml` stack providing a reproducible multi-container development environment. In production, the system is deployed on DigitalOcean using Docker Swarm, where stack files under `devops/docker/swarm/` define the API service, database, Traefik reverse proxy, and monitoring services; Traefik routes HTTP traffic and balances requests across three replicated API instances. Persistent state is managed by PostgreSQL backed by a DigitalOcean Block Storage volume mounted at `/mnt/volume_uniconn_01/postgresql/data`, ensuring that user and event data survives container restarts and redeployments. Sensitive configuration values—including database credentials and the JWT secret—are injected via Docker Secrets and read from `/run/secrets` by the backend, avoiding plain-text environment variables. Health and metrics endpoints (`/api/health`, `/api/metrics`) are integrated with a Prometheus, Grafana, and Node Exporter monitoring stack, providing continuous visibility into request latency, error rates, and node-level resource usage and thereby satisfying the monitoring and observability requirements.
 
-## Technical stack (Integrate this section with the above paragraph)
+UniConn is built using modern, cloud-native technologies designed for scalability, reliability, and maintainability.
 
-| Objective | Key Features / Implementation | Description |
-| ----- | ----- | ----- |
-| **Centralized Event Aggregation** | Using REST API for event data management and retrieval according to different users | Provides standardized REST API endpoints that will enable access for different users based on user authentication levels, perform appropriate CRUD operations (such as creating, updating, viewing, or deleting event data). |
-|  | Search and filter events by timestamp, faculty, type and other related preferences. | Enables users to quickly locate specific events within the centralized database. |
-| **Collaborative Engagement and Real-Time Insights** | Via DigitalOcean Functions for Serverless notifications  | Sending automated alerts/notifications when organizers create or update events, or reminding students or organizers when crucial events occur. |
-|  | Integration with External Services for extra notifications | Integrate with external services (e.g., SendGrid API) to send automated RSVP confirmations and event reminders, enhancing the serverless notification workflow.  |
-| **Reliable State Management and Data Integrity** | Using PostgreSQL for event storage with persistent DigitalOcean volumes | Stores all event information securely and ensures data durability across redeployments and restarts for long-term records. |
-|  | User authentication and organization-based access | Integrates secure authentication and manages role-based authorization for different users (e.g., department staff, organizers, and student users). Also, enforcing HTTPS encryption and secrets management to protect credentials, API keys, and sensitive configurations. |
-| **Cloud-Native Deployment and Scalability** | Containerization and Local Development (Docker \+ Docker Compose) | Running the core services (e.g.Node.js backend, PostgreSQL database and Redis) in separate Docker containers. Using a Docker Compose file to manage the multi-container setup to maintain development and deployment consistency. |
-|  | Deployment on DigitalOcean using Docker Swarm for orchestration | Provides container orchestration, replication, and load balancing for scalable performance under high traffic. |
-| **Observability and System Reliability** | Monitoring alerts for high event volume or system health | Tracks CPU, memory, API latency, and database load. Also monitoring alerts for unusual system behavior.
+| Category | Technology | Purpose |
+| -------- | ---------- | ------- |
+| **Backend Framework** | Node.js + Express.js | Provides a lightweight and efficient RESTful API framework for handling event management, user authentication, and real-time interactions |
+| **Real-Time Communication** | Socket.io | Enables real-time bidirectional communication for live event updates and collaborative features such as instant notifications and WebSocket-based interactions |
+| **Database** | PostgreSQL 16 | Stores all event data, user profiles, RSVPs, comments, and authentication records with ACID compliance and relational integrity |
+| **Data Persistence** | DigitalOcean Volumes | Ensures persistent data storage across container restarts and deployments |
+| **Authentication** | JWT (JSON Web Tokens) + bcrypt | Implements secure authentication and role-based access control. JWT tokens manage user sessions, while bcrypt ensures password security through hashing |
+| **Email Notifications** | SendGrid API | Handles automated email notifications for RSVP confirmations, event reminders, and event updates to keep users informed |
+| **Metrics Collection** | Prometheus | Collects comprehensive system metrics from the application, Traefik, and system exporters |
+| **Metrics Visualization** | Grafana | Provides custom dashboards tracking CPU usage, memory consumption, API latency, request rates, and database performance |
+| **Reverse Proxy & Load Balancer** | Traefik | Acts as a reverse proxy and load balancer with built-in service discovery, automatic HTTPS, and Prometheus metrics integration for traffic monitoring and routing |
+| **Cloud Monitoring** | DigitalOcean Monitoring | Complements the self-hosted monitoring stack with cloud provider metrics and alerting for infrastructure health |
+| **Containerization** | Docker + Docker Compose | Containerizes all services (API, PostgreSQL) for consistent local development and testing environments |
+| **Orchestration** | Docker Swarm (on DigitalOcean) | Orchestrates production deployment with automatic service replication, load balancing, and rolling updates. Chosen over Kubernetes for its simplicity and built-in integration with Docker, making it ideal for medium-scale deployments while maintaining cloud-native scalability |
+| **CI/CD** | GitHub Actions | Automates build, test, and deployment pipelines to ensure code quality and streamline releases |
+| **Security** | Helmet.js | Enhances API security by setting HTTP headers that protect against common web vulnerabilities |
+| **Metrics Library** | prom-client | Exposes application-level metrics (request duration, error rates) to Prometheus for observability |
+| **Configuration Management** | dotenv | Manages environment variables and secrets securely across development and production environments |
 
 # 4.0 Features
 
