@@ -318,9 +318,10 @@ This section explains how to set up locally for testing and how to deploy to the
 # 8.0 Individual Contributions
 
 **Spiro Li**
-
 Spiro implemented the JWT-based authentication system with login, registration, and role-based access control, and developed the SendGrid notification service that automatically sends email confirmations for user registrations, event creation/updates, and RSVP confirmations. He also designed and implemented the RESTful API architecture with Express.js, including all event, comment, and RSVP endpoints with proper validation, and integrated WebSocket real-time functionality using Socket.io to broadcast live updates for events, comments, and RSVPs to connected clients.
 
+**Weijie (Vicky) Zhu**
+Weijie architected and implemented the complete PostgreSQL database schema, establishing robust data models for users, events, RSVPs, comments, and registrations with comprehensive foreign key constraints, strategic indexing for query performance optimization, and automated trigger functions for timestamp management. She authored detailed database documentation covering entity-relationship modeling and data integrity specifications, developed the analytics API endpoint that delivers key performance indicators, event rankings, and statistical distributions for organizer insights, and significantly enhanced the frontend user experience through RSVP status management, toast notification systems, personalized event tracking via the "My Events" interface, and seamless WebSocket integration for real-time collaborative features.
 
 **Jerry Chen**
 Jerry contributed to backend, frontend, and DevOps development. He created the docker-compose setup for local API and frontend testing, deployed the application to the cloud using Docker Swarm, and strengthened observability by redesigning the Grafana dashboard and configuring Prometheus metrics. Jerry implemented the comment-posting logic, built the initial event room UI structure, and enhanced the WebSocket backend for more reliable real-time communication. He also introduced Helmet.js and integrated Traefik to improve the platform’s security and routing reliability.
