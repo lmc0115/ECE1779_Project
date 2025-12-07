@@ -17,6 +17,7 @@ By centralizing event data, UniConn enhances communication efficiency, accessibi
 
 # 2.0 Objective
 
+UniConn focuses on unifying event information, enabling real-time collaboration, maintaining data integrity under load, scaling via cloud-native deployment, and staying observable through built-in monitoring. 
 
 ## Centralized Event Aggregation
 
@@ -43,6 +44,7 @@ UniConn deploys monitoring platforms provides **clear visibility into performanc
 
 # 3.0 Technical Stack
 
+## 3.1 Technical stack summary
 UniConn is built using modern, cloud-native technologies designed for scalability, reliability, and maintainability.
 
 | **Category** | **Technology** | **Purpose / Description** |
@@ -64,6 +66,23 @@ UniConn is built using modern, cloud-native technologies designed for scalabilit
 
 
 
+## 3.2 Docker Swarm Runtime Topology
+
+- **API service (`api`)**: 3 replicas on **worker nodes**; exposed via Traefik on `traefik-public` with sticky sessions; attached to `uniconn_internal` for database access; health check at `/api/health`.
+- **WebSocket entrypoint (`api-ws`)**: 1 replica on **worker nodes** dedicated to `/socket.io`; attached to `traefik-public` and `uniconn_internal`; health check at `/api/health`.
+- **Database (`db`)**: 1 replica pinned to the **manager node**; volume `/mnt/volume_uniconn_01/postgresql/data` mounted to `/var/lib/postgresql/data` for persistent storage; credentials via Docker secrets; on `uniconn_internal` only.
+- **Prometheus**: 1 replica on the **manager node**; ports `9090:9090`; config from `monitoring/prometheus.yaml`; persistent volume `prometheus-data`; attached to `traefik-public` and `uniconn_internal`.
+- **Grafana**: 1 replica on the **manager node**; ports `3000:3000`; persistent volume `grafana-data`; provisioning from `monitoring/grafana/...`; attached to `traefik-public` and `uniconn_internal`.
+- **Traefik**: 1 replica on the **manager node**; ports `80:80` and `8080:8080`; attached to `traefik-public`; handles routing/load balancing, security headers, and Prometheus metrics exposure.
+- **Networks**:
+  - `traefik-public` (external): ingress path for Traefik routing to `api` and `api-ws`.
+  - `uniconn_internal` (overlay, attachable): service-to-service network for API ↔ DB and internal traffic.
+
+## 3.3 Monitoring and Alerts metrics
+
+- **Grafana Alerts**: Use Grafana at `http://143.198.39.167:3000` (admin/admin by default) to configure alert rules on key panels—API latency (`http_request_duration_seconds`), request errors (non-2xx rates), CPU/memory/disk from Node Exporter, and Traefik traffic errors. Set email/Slack channels for threshold breaches (e.g., CPU > 70% for 5m, memory > 80% for 5m, high error rate).
+- **Prometheus Targets**: All jobs (`uniconn-api`, `traefik`, `node-exporter`, `prometheus`) should be green in `Prometheus > Status > Targets` at `http://143.198.39.167:9090`.
+- **Provider Alerts (DigitalOcean)**: Configure DO console alerts for Droplet health: CPU > 70% (5m), memory > 80% (5m), and **Droplet down/unreachable**. These send provider-level notifications if the host or network fails, complementing Grafana rules.
 
 # 4.0 Features
 
@@ -134,7 +153,7 @@ UniConn includes operational tools to ensure reliability and observability. A `/
 
 |**Duplicate Email Detection**            | **Email Comfirmation**|
 |--|--|
-| ![register](UserGuideSources/errorregister.png)||
+| ![register](UserGuideSources/errorregister.png)|![emailregister](UserGuideSources/emailregister.png)|
 
 ### 5.1.2 Logging In
 
@@ -157,17 +176,21 @@ UniConn includes operational tools to ensure reliability and observability. A `/
 4. Use the **faculty** and **category** dropdowns to narrow the list to events that match specific academic areas or themes.  
 5. Use the **start** and **end date** filters to focus on events happening within a chosen time window.  
 
-[Screenshot: Student dashboard – Browse Events with filters]
+|**Browse Events with Filters**|
+|--|
+|![student](UserGuideSources/browse.png)|
 
 ### 5.2.2 Commenting and Real-Time Discussion
 
 1. Select an event to open its **details and discussion** area.  
 2. In the **Comments** section, type a message then submit it.  
-3. Newly added comments appear instantly for all connected users viewing that event, comments will be stored in DB and load automatically after each log-in action.  
-4. Student can **only delete their own comments**. Organizers can **delete any comments they made or appeared in the evnets they created**. 
+3. Newly added comments appear instantly for all connected users viewing that event; comments are stored in the database and load automatically after each login.  
+4. All users can **only delete their own comments**.
 
-[Screenshot: Event details view with comment list and input box]
 
+|**Comments and Discussion**|
+|--|
+|![student](UserGuideSources/comment.png)|
 
 ### 5.2.3 Live Event Chat and Presence
 
@@ -176,7 +199,9 @@ UniConn includes operational tools to ensure reliability and observability. A `/
 3. As other users send messages or start typing, the chat panel updates immediately with new content and typing indicators.  
 4. A participant counter shows how many users are currently viewing or chatting about the event.  
 
-[Screenshot: Live chat panel with messages, typing indicator, and participant count]
+|**Typing Indicator** |**Leaving Indicator**|
+|--|--|
+|![student](UserGuideSources/typing_indicator.png) | ![organizer](UserGuideSources/leavingindicator.png)|
 
 ### 5.2.4 Viewing, Editing Personal Information and Logging Out
 
@@ -184,18 +209,32 @@ UniConn includes operational tools to ensure reliability and observability. A `/
 2. A modal opens showing the student’s **name**, **email**, and **role**, along with a **edit** and **Logout** button.  
 3. Click on **edit** for editing personal information of the current account or log out when finished using the system.  
 
-[Screenshot: Student profile modal showing personal information]
+|**Personal Info** |**Editing Window**|
+|--|--|
+|![student](UserGuideSources/personalinfo.png) | ![organizer](UserGuideSources/edit_window.png)|
 
 
 ## Student
 ### 5.3.1 Registering for Events
 
-1. In the **Browse Events** tab, locate an event of interest.  
-2. Use the event’s **registration control** (for example, a single button or status selector) to choose an attendance status such as *Going*, *Interested*, or *Cancelled*.  
-3. The updated status is saved to the system and displayed immediately in the UI. Aggregate counts for each event are updated as more students respond.  
-4. When email notifications are enabled, a confirmation email is sent after a successful registration or change in status.  
+1. In the **Browse Events** tab, open any event card.  
+2. Click the **RSVP Going** icon/button to register.  
+3. After a successful registration, a confirmation email is sent (when email notifications are enabled).  
 
-[Screenshot: Event card with registration control and status]
+|**Before clicking** |**After clicking**|
+|--|--|
+|![student](UserGuideSources/beforeclicking.png) | ![organizer](UserGuideSources/afterclicking.png)|
+
+
+### 5.3.2 Viewing Registered Events
+
+1. Navigate to the **My Events** tab.  
+2. Review the detailed list of all events you have registered for.  
+3. Use the list to confirm attendance status or open event details as needed.  
+
+|**My Events (Registered)**|
+|--|
+|![student](UserGuideSources/studentevent.png)|
 
 
 
@@ -214,9 +253,9 @@ UniConn includes operational tools to ensure reliability and observability. A `/
    - Start date and time, end date and time  
 5. Submit the form to publish the event. The event is added to the central event list and becomes immediately visible to students.  
 
-[Screenshot: Organizer create-event form]
-
-This workflow directly contributes to Objectives **2.1** and **2.2**, allowing organizers to enrich the shared event pool and reach students through a single, unified platform.
+|**Create Event Form**|
+|--|
+|![student](UserGuideSources/createevent.png)|
 
 ### 5.3.2 Editing and Deleting Events
 
@@ -225,7 +264,9 @@ This workflow directly contributes to Objectives **2.1** and **2.2**, allowing o
 3. Choose **Edit** to adjust details such as time, description, or location, then save the changes. All connected clients receive updated information in real time.  
 4. Choose **Delete** to remove the event entirely if it is cancelled. Once deleted, the event disappears from the student view and from analytics.  
 
-[Screenshot: Organizer event list with edit and delete actions]
+|**Modify Window** |**Modify result**|
+|--|--|
+|![student](UserGuideSources/modifiytest.png) | ![organizer](UserGuideSources/modifyresult.png)|
 
 Ownership rules ensure that organizers can modify only their own events, which supports Objective **2.2 Empower Both Students and Organizers** and keeps event data reliable (Objective **2.4**).
 
@@ -238,19 +279,11 @@ Ownership rules ensure that organizers can modify only their own events, which s
    - Attendance trends and top-performing events  
 3. Use this information to refine event timing, topics, or promotion strategies.  
 
-[Screenshot: Organizer analytics dashboard]
+|**Organizer Dashboard Analytics**|
+|--|
+|![student](UserGuideSources/orgdashboard.png)| 
 
-These analytics give organizers feedback on how students are engaging, which supports Objective **2.2** by helping organizers make more informed decisions about their events.
 
-### 5.3.4 Moderating Comments
-
-1. Open an owned event from the Organizer Dashboard and scroll to the **Comments** section.  
-2. Review the list of comments posted by students.  
-3. If a comment is inappropriate or off-topic, use the **delete** action to remove it.  
-
-[Screenshot: Organizer view with comment moderation controls]
-
-Comment moderation helps maintain a productive discussion environment while still encouraging open communication around events (Objective **2.3**).
 
 
 # 6.0 Development Guide
@@ -312,22 +345,53 @@ This section explains how to set up locally for testing and how to deploy to the
 - **Grafana dashboard**: `http://143.198.39.167:3000/`
 - **Traefik dashboard**: `http://143.198.39.167:8080`
 
-[Screenshot: Deployed UniConn home]
-[Screenshot: Grafana dashboard overview]
+|**Grafana Dashboard**|
+|--|
+|![student](UserGuideSources/grafana.png)| 
+
+|**Traefik Dashboard**|
+|--|
+|![student](UserGuideSources/traefik.png)| 
 
 # 8.0 Individual Contributions
 
-**Spiro Li**
-Spiro implemented the JWT-based authentication system with login, registration, and role-based access control, and developed the SendGrid notification service that automatically sends email confirmations for user registrations, event creation/updates, and RSVP confirmations. He also designed and implemented the RESTful API architecture with Express.js, including all event, comment, and RSVP endpoints with proper validation, and integrated WebSocket real-time functionality using Socket.io to broadcast live updates for events, comments, and RSVPs to connected clients.
+**Spiro Li**  
+Spiro led backend API design and real-time feature development:  
+- Authentication System: Implemented JWT-based auth with bcrypt hashing and `/api/auth/register`, `/api/auth/login`, `/api/auth/me` endpoints with role-based access in `routes/auth.js`.  
+- SendGrid Email Notifications: Built `notificationService.js` to send automated emails for registrations, event creation/updates, and RSVP confirmations via SendGrid.  
+- WebSocket Real-Time Functionality: Developed `websocket.js` with Socket.IO for live event updates, RSVP broadcasts, real-time comments, chat messaging, typing indicators, and room-based participant tracking.  
+- REST API Architecture: Structured Express routing with middleware for validation, CORS, and Helmet security headers.  
+- Monitoring Dashboard Frontend: Created the monitoring UI (`devops/docker/swarm/monitoring/frontend/`) with modern styling and JS metrics visualization for Prometheus.  
+- Technical Documentation: Authored `ADVFEATURE.md` covering implementation and testing of notifications and WebSocket features.
 
-**Weijie (Vicky) Zhu**
-Weijie architected and implemented the complete PostgreSQL database schema, establishing robust data models for users, events, RSVPs, comments, and registrations with comprehensive foreign key constraints, strategic indexing for query performance optimization, and automated trigger functions for timestamp management. She authored detailed database documentation covering entity-relationship modeling and data integrity specifications, developed the analytics API endpoint that delivers key performance indicators, event rankings, and statistical distributions for organizer insights, and significantly enhanced the frontend user experience through RSVP status management, toast notification systems, personalized event tracking via the "My Events" interface, and seamless WebSocket integration for real-time collaborative features.
+**Weijie (Vicky) Zhu**  
+Weijie owned database design, analytics, and frontend enhancements:  
+- PostgreSQL Schema Design: Authored `uniconn-backend/db/schema.sql` with users, events, rsvps, comments, registrations, FKs, indexes, and timestamp triggers.  
+- Database Documentation: Wrote `uniconn-backend/db/database.md` describing ER model, table structures, and integrity constraints.  
+- Analytics Dashboard API: Implemented `/api/analytics/organizer/summary` (`routes/analytics.js`) for KPIs, top events, and faculty/category distributions.  
+- Frontend Event Management: Enhanced `dashboard.js` with RSVP formatting, date utilities, toasts, “My Events,” filtering/sorting, and improved WebSocket comment handling.  
+- Manual Test Cases: Authored `MANUAL_TEST_CASES.md` with 40+ cases covering auth, CRUD, RSVP, comments, and real-time flows.  
+- Project Docs: Contributed proposal, tentative plan, and lessons-learned sections of the README.
 
-**Jerry Chen**
-Jerry contributed to backend, frontend, and DevOps development. He created the docker-compose setup for local API and frontend testing, deployed the application to the cloud using Docker Swarm, and strengthened observability by redesigning the Grafana dashboard and configuring Prometheus metrics. Jerry implemented the comment-posting logic, built the initial event room UI structure, and enhanced the WebSocket backend for more reliable real-time communication. He also introduced Helmet.js and integrated Traefik to improve the platform’s security and routing reliability.
+**Jerry Chen**  
+Jerry led cloud infrastructure, DevOps, and deployment:  
+- Docker Swarm Orchestration: Designed Swarm architecture on DigitalOcean with multi-replica API (`uniconn.yaml`), placement constraints, and rolling updates.  
+- Traefik Reverse Proxy: Configured `traefik.yaml` with HTTP routing, security headers, sticky sessions for WebSockets, and service discovery.  
+- Monitoring Stack: Deployed Prometheus & Grafana (`monitoring-stack.yaml`) with custom scrapes (`prometheus.yaml`) plus Node Exporter.  
+- Health Check Endpoints: Implemented `/api/health` and `/api/metrics` (`routes/health.js`) using `prom-client` for HTTP metrics.  
+- Secrets Management: Authored `create-secrets.sh` for Swarm secrets (Postgres, JWT, SendGrid) with file-based injection.  
+- Deployment Automation: Built `redeploy.sh` for pre-flight checks, image build/push, stack deploy, and health verification.  
+- Helmet Security Configuration: Tuned Helmet/CSP for HTTP deployment compatibility and Socket.IO CDN support.
 
-**Muchen Liu**
-Muchen developed the baseline frontend features, including the login and registration pages, personal information modal, and role-based dashboards. He improved the event room UI, added real-time online user counting through WebSocket updates, and revised backend profile-editing logic to allow users to update their information. He also supported DevOps tasks by helping create deployment .sh scripts and debugging YAML configurations for Traefik and Prometheus.
+**Muchen Liu**  
+Muchen focused on backend APIs, frontend UX, and testing:  
+- Backend Foundations: Set up Express app (`app.js`), DB pooling (`db.js`), config (`config.js`), and JWT middleware (`middleware/auth.js`).  
+- Event Management APIs: Implemented CRUD for events (`routes/events.js`), comments (`routes/comments.js`), and RSVPs (`routes/rsvps.js`) with authorization.  
+- Frontend Dashboard: Built `frontendtest/index.html` and `dashboard.js` with login/registration, student dashboard (browse/filter/RSVP/comments), organizer dashboard (create/edit, analytics via Chart.js), profile editing modal, and responsive Tailwind styling.  
+- WebSocket Frontend Integration: Integrated Socket.IO client for chat, typing indicators, presence tracking, and live event/comment updates.  
+- Local Dev Environment: Authored `docker-compose.local.yaml`, set up Swarm local simulation, and documented testing in `teststeps.md`.  
+- Bug Fixes: Resolved profile editing issues and frontend-backend integration defects during final testing.
+
 # 9.0 Lessons Learned and Concluding Remarks
 
 Building UniConn provided valuable insights into developing and deploying cloud-native applications. One of the most critical lessons was the importance of **clear service boundary definition**. Separating concerns between authentication, event management, comments, RSVPs, and notifications into distinct API routes made the backend modular and maintainable, but required careful planning of inter-service communication patterns and shared database access.
@@ -345,3 +409,6 @@ Building UniConn provided valuable insights into developing and deploying cloud-
 Finally, implementing **observability with Prometheus and Grafana** demonstrated that monitoring is not optional—it's essential for understanding system behavior under load, identifying bottlenecks, and maintaining reliability. Exposing custom metrics (request duration, error rates) alongside infrastructure metrics provided actionable insights for optimization.
 
 Overall, UniConn successfully demonstrated how modern cloud-native technologies can solve real-world problems. The project reinforced that building scalable, reliable systems requires not just writing code, but thoughtfully designing architectures, carefully managing state, and implementing comprehensive testing and monitoring. The hands-on experience with Docker Swarm, PostgreSQL, WebSockets, and DevOps practices provided practical skills directly applicable to industry cloud deployments, while delivering a functional platform that addresses genuine communication gaps in university campus life.
+
+# 10.0 Live Demo URL
+link should be posted here.
