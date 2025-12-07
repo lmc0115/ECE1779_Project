@@ -384,32 +384,8 @@ Jerry led cloud infrastructure, DevOps, and deployment:
 - Deployment Automation: Built `redeploy.sh` for pre-flight checks, image build/push, stack deploy, and health verification.  
 - Helmet Security Configuration: Tuned Helmet/CSP for HTTP deployment compatibility and Socket.IO CDN support.
 
-**Muchen Liu**  
-Muchen focused on backend APIs, frontend UX, and testing:  
-- Backend Foundations: Set up Express app (`app.js`), DB pooling (`db.js`), config (`config.js`), and JWT middleware (`middleware/auth.js`).  
-- Event Management APIs: Implemented CRUD for events (`routes/events.js`), comments (`routes/comments.js`), and RSVPs (`routes/rsvps.js`) with authorization.  
-- Frontend Dashboard: Built `frontendtest/index.html` and `dashboard.js` with login/registration, student dashboard (browse/filter/RSVP/comments), organizer dashboard (create/edit, analytics via Chart.js), profile editing modal, and responsive Tailwind styling.  
-- WebSocket Frontend Integration: Integrated Socket.IO client for chat, typing indicators, presence tracking, and live event/comment updates.  
-- Local Dev Environment: Authored `docker-compose.local.yaml`, set up Swarm local simulation, and documented testing in `teststeps.md`.  
-- Bug Fixes: Resolved profile editing issues and frontend-backend integration defects during final testing.
+Spiro implemented the JWT-based authentication system with login, registration, and role-based access control, and developed the SendGrid notification service that automatically sends email confirmations for user registrations, event creation/updates, and RSVP confirmations. He also designed and implemented the RESTful API architecture with Express.js, including all event, comment, and RSVP endpoints with proper validation, and integrated WebSocket real-time functionality using Socket.io to broadcast live updates for events, comments, and RSVPs to connected clients.
 
-# 9.0 Lessons Learned and Concluding Remarks
+**Weijie (Vicky) Zhu**
 
-Building UniConn provided valuable insights into developing and deploying cloud-native applications. One of the most critical lessons was the importance of **clear service boundary definition**. Separating concerns between authentication, event management, comments, RSVPs, and notifications into distinct API routes made the backend modular and maintainable, but required careful planning of inter-service communication patterns and shared database access.
-
-**Debugging distributed systems** proved more challenging than anticipated. With three replicated API instances behind Traefik's load balancer, tracing issues required implementing comprehensive logging and understanding sticky sessions. WebSocket connections in a load-balanced environment demanded particular attention—we learned that sticky sessions are essential for maintaining real-time connections, and that proper room-based broadcasting helps coordinate state across replicas.
-
-**Persistent storage and state management** was another significant learning area. Configuring PostgreSQL with DigitalOcean Volumes required careful attention to file permissions (postgres user 999:999), volume mounting on the correct node (manager constraint), and understanding that container restarts preserve data but require proper health checks to avoid race conditions during startup. Managing Docker Secrets for sensitive credentials reinforced the importance of secure configuration management in production environments.
-
-**Database schema evolution** highlighted the need for forward-thinking design. Supporting both `registrations` and `rsvps` tables for backward compatibility, while maintaining referential integrity through foreign key constraints and cascading deletes, taught us to balance flexibility with data consistency. Implementing proper indexes for filtering (by faculty, category, date) significantly improved query performance as the dataset grew.
-
-**API design challenges** included implementing role-based access control that enforces ownership rules (organizers can only modify their own events) while allowing admin overrides. Integrating SendGrid for automated email notifications required handling async operations gracefully with fire-and-forget patterns to avoid blocking API responses.
-
-**Collaborative development** using Git, along with Docker Compose for consistent local environments, minimized "works on my machine" issues. The deployment automation scripts (redeploy.sh, create-secrets.sh) evolved from manual commands into robust, repeatable workflows with pre-flight checks and rollback capabilities.
-
-Finally, implementing **observability with Prometheus and Grafana** demonstrated that monitoring is not optional—it's essential for understanding system behavior under load, identifying bottlenecks, and maintaining reliability. Exposing custom metrics (request duration, error rates) alongside infrastructure metrics provided actionable insights for optimization.
-
-Overall, UniConn successfully demonstrated how modern cloud-native technologies can solve real-world problems. The project reinforced that building scalable, reliable systems requires not just writing code, but thoughtfully designing architectures, carefully managing state, and implementing comprehensive testing and monitoring. The hands-on experience with Docker Swarm, PostgreSQL, WebSockets, and DevOps practices provided practical skills directly applicable to industry cloud deployments, while delivering a functional platform that addresses genuine communication gaps in university campus life.
-
-# 10.0 Live Demo URL
-https://youtu.be/cJ6c08TYr5c
+Weijie designed and implemented the complete PostgreSQL database schema with proper foreign key constraints, indexes for query optimization, and triggers for automatic timestamp updates. She created comprehensive database documentation describing the entity-relationship model and data integrity constraints, implemented the analytics dashboard API endpoint providing organizers with KPIs, top events ranking, and distribution analytics, and enhanced the frontend with RSVP status formatting, toast notifications, "My Events" tab functionality, and improved WebSocket integration for real-time updates. She also authored the comprehensive manual test cases document covering all major features and contributed the initial project proposal and lessons learned sections to the README.
