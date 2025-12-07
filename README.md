@@ -167,3 +167,7 @@ Manages environment variables and secrets securely across development and produc
 **Spiro Li**
 
 Spiro implemented the JWT-based authentication system with login, registration, and role-based access control, and developed the SendGrid notification service that automatically sends email confirmations for user registrations, event creation/updates, and RSVP confirmations. He also designed and implemented the RESTful API architecture with Express.js, including all event, comment, and RSVP endpoints with proper validation, and integrated WebSocket real-time functionality using Socket.io to broadcast live updates for events, comments, and RSVPs to connected clients.
+
+**Weijie (Vicky) Zhu**
+
+Weijie designed and implemented the complete PostgreSQL database schema with proper foreign key constraints, indexes for query optimization, and triggers for automatic timestamp updates. She created comprehensive database documentation describing the entity-relationship model and data integrity constraints, implemented the analytics dashboard API endpoint providing organizers with KPIs, top events ranking, and distribution analytics, and enhanced the frontend with RSVP status formatting, toast notifications, "My Events" tab functionality, and improved WebSocket integration for real-time updates. She also authored the comprehensive manual test cases document covering all major features and contributed the initial project proposal and lessons learned sections to the README.
