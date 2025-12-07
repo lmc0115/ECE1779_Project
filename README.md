@@ -68,6 +68,8 @@ UniConn is built using modern, cloud-native technologies designed for scalabilit
 
 ## 3.2 Docker Swarm Runtime Topology
 
+On the Docker Swarm deployment, UniConn is orchestrated across **one** **manager** node and **one** **worker** node. The cluster runs all backend, frontend, and supporting services with defined replica counts and overlay networks, ensuring high availability, service isolation, and reliable real-time communication. The current deployment configuration includes the active services, their replicas, and the associated network topology as summarized below.
+
 - **API service (`api`)**: 3 replicas on **worker nodes**; exposed via Traefik on `traefik-public` with sticky sessions; attached to `uniconn_internal` for database access; health check at `/api/health`.
 - **WebSocket entrypoint (`api-ws`)**: 1 replica on **worker nodes** dedicated to `/socket.io`; attached to `traefik-public` and `uniconn_internal`; health check at `/api/health`.
 - **Database (`db`)**: 1 replica pinned to the **manager node**; volume `/mnt/volume_uniconn_01/postgresql/data` mounted to `/var/lib/postgresql/data` for persistent storage; credentials via Docker secrets; on `uniconn_internal` only.
@@ -410,4 +412,4 @@ Finally, implementing **observability with Prometheus and Grafana** demonstrated
 Overall, UniConn successfully demonstrated how modern cloud-native technologies can solve real-world problems. The project reinforced that building scalable, reliable systems requires not just writing code, but thoughtfully designing architectures, carefully managing state, and implementing comprehensive testing and monitoring. The hands-on experience with Docker Swarm, PostgreSQL, WebSockets, and DevOps practices provided practical skills directly applicable to industry cloud deployments, while delivering a functional platform that addresses genuine communication gaps in university campus life.
 
 # 10.0 Live Demo URL
-link should be posted here.
+https://youtu.be/cJ6c08TYr5c

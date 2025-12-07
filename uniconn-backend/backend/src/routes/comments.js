@@ -1,7 +1,7 @@
 const express = require("express");
 const db = require("../db");
 const { authRequired } = require("../middleware/auth");
-const { broadcastCommentCreated } = require("../services/websocket");
+const { broadcastCommentCreated, broadcastCommentDeleted } = require("../services/websocket");
 
 const router = express.Router({ mergeParams: true });
 
@@ -46,9 +46,11 @@ router.post("/:eventId/comments", authRequired, async (req, res) => {
     );
 
     // broadcast real-time update
-    broadcastCommentCreated(commentWithAuthor.rows[0], eventId);
+    const savedComment = commentWithAuthor.rows[0];
 
-    res.status(201).json({ comment: result.rows[0] });
+    broadcastCommentCreated(savedComment, eventId);
+
+    res.status(201).json({ comment: savedComment });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -83,6 +85,9 @@ router.delete("/:eventId/comments/:commentId", authRequired, async (req, res) =>
     }
 
     await db.query("DELETE FROM comments WHERE id = $1", [commentId]);
+
+    // Broadcast real-time deletion
+    broadcastCommentDeleted(commentId, eventId);
 
     res.json({ message: "Comment deleted successfully" });
   } catch (err) {

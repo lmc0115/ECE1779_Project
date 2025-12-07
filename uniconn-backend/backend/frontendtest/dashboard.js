@@ -48,6 +48,7 @@ let previousPage = null;
 let editingEventId = null;
 
 let currentEventRoom = null;
+let currentEventRole = null;
 let typingTimeout = null;
 
 // =========================================================
@@ -131,6 +132,8 @@ function showPage(id) {
 function logout() {
   token = "";
   user = null;
+  currentEventRoom = null;
+  currentEventRole = null;
   
   // Clear token from localStorage
   localStorage.removeItem("token");
@@ -635,17 +638,9 @@ async function loadStudentMyEvents() {
 
 
 // =========================================================
-// EVENT DETAIL PAGE
+// EVENT DETAIL HELPERS
 // =========================================================
-async function openEventDetail(eventId, role) {
-  previousPage = role === "student" ? "student_page" : "organizer_page";
-
-  showPage("event_detail_page");
-
-  const res = await fetch(`${API_BASE}/api/events/${eventId}`);
-  const data = await res.json();
-  const ev = data.event;
-
+function renderEventDetailContent(ev, role) {
   const isOwner = (user.role === "organizer" && user.id === ev.organizer_id);
 
   // Hide RSVP stats panel by default (will be shown only for owner)
@@ -682,17 +677,31 @@ async function openEventDetail(eventId, role) {
     </div>
   `;
 
-  // Load RSVP stats (only for event owner)
   if (isOwner) {
-    loadEventRSVPs(eventId);
+    loadEventRSVPs(ev.id);
   }
-  
-  loadEventComments(eventId);
 
-  // Check student's existing RSVP
   if (role === "student") {
-    checkMyRSVP(eventId);
+    checkMyRSVP(ev.id);
   }
+}
+
+
+// =========================================================
+// EVENT DETAIL PAGE
+// =========================================================
+async function openEventDetail(eventId, role) {
+  previousPage = role === "student" ? "student_page" : "organizer_page";
+  currentEventRole = role;
+
+  showPage("event_detail_page");
+
+  const res = await fetch(`${API_BASE}/api/events/${eventId}`);
+  const data = await res.json();
+  const ev = data.event;
+
+  renderEventDetailContent(ev, role);
+  loadEventComments(eventId);
 
   // show chat panel
   document.getElementById("event_chat_panel").classList.remove("hidden");
@@ -1075,6 +1084,13 @@ async function submitUpdateEvent() {
   }
 
   closeUpdateEventModal();
+  
+  // Immediately update the event detail view if we're viewing this event
+  if (data.event && currentEventRoom && data.event.id == currentEventRoom) {
+    const role = currentEventRole || user?.role || "organizer";
+    renderEventDetailContent(data.event, role);
+  }
+
   editingEventId = null;
 
   showToast("Event updated successfully.", "success");
@@ -1121,6 +1137,7 @@ function backToPreviousPage() {
     });
     currentEventRoom = null;
   }
+  currentEventRole = null;
 
   document.getElementById("event_chat_panel").classList.add("hidden");
   showPage(previousPage);
@@ -1175,20 +1192,93 @@ function appendChatMessage(html) {
 
 
 // =========================================================
+// EVENT LIST REFRESH HELPERS
+// =========================================================
+function isVisible(id) {
+  const el = document.getElementById(id);
+  return el && !el.classList.contains("hidden");
+}
+
+function refreshEventLists() {
+  if (!user) return;
+
+  if (user.role === "student") {
+    if (isVisible("student_browse")) {
+      loadEventsList("student");
+    }
+    if (isVisible("student_my_events")) {
+      loadStudentMyEvents();
+    }
+  } else {
+    if (isVisible("organizer_browse")) {
+      loadEventsList("organizer");
+    }
+    if (isVisible("organizer_my_events")) {
+      loadMyEventsList();
+    }
+  }
+}
+
+
+// =========================================================
 // WEBSOCKET SETUP
 // =========================================================
 function initWebSocket() {
   socket = io(WS_BASE);
 
+  socket.on("event:created", ({ event }) => {
+    refreshEventLists();
+  });
+
+  socket.on("event:updated", ({ event }) => {
+    refreshEventLists();
+
+    // Use == for loose comparison (event.id could be string or number)
+    // Only show toast for updates from OTHER users (not the current user editing)
+    if (currentEventRoom && event.id == currentEventRoom && !editingEventId) {
+      const role = currentEventRole || user?.role || "student";
+      renderEventDetailContent(event, role);
+      showToast("Event details updated by organizer", "info");
+    }
+  });
+
+  socket.on("event:deleted", ({ eventId }) => {
+    refreshEventLists();
+
+    // Use == for loose comparison
+    if (currentEventRoom && eventId == currentEventRoom) {
+      showToast("This event was deleted by the organizer.", "warning");
+      backToPreviousPage();
+    }
+  });
+
   socket.on("comment:created", (d) => {
-    if (currentEventRoom && d.eventId === currentEventRoom) {
-      appendCommentToList(d.comment);
+    // Use == for loose comparison (eventId could be string or number)
+    if (currentEventRoom && d.eventId == currentEventRoom) {
+      // Only append if the comment doesn't already exist (prevent duplicates from local append)
+      const existing = document.getElementById(`comment-${d.comment.id}`);
+      if (!existing) {
+        appendCommentToList(d.comment);
+      }
+    }
+  });
+
+  socket.on("comment:deleted", (d) => {
+    // Use == for loose comparison (eventId could be string or number)
+    if (currentEventRoom && d.eventId == currentEventRoom) {
+      const commentEl = document.getElementById(`comment-${d.commentId}`);
+      if (commentEl) {
+        commentEl.style.opacity = '0';
+        commentEl.style.transform = 'translateX(-20px)';
+        setTimeout(() => commentEl.remove(), 300);
+      }
     }
   });
 
   socket.on("rsvp:updated", (d) => {
     // Only refresh RSVP stats if we're viewing this event AND the stats panel is visible (owner only)
-    if (currentEventRoom && d.eventId === currentEventRoom) {
+    // Use == for loose comparison
+    if (currentEventRoom && d.eventId == currentEventRoom) {
       const statsPanel = document.getElementById("event_stats_panel");
       if (statsPanel && !statsPanel.classList.contains("hidden")) {
         loadEventRSVPs(d.eventId);
@@ -1372,7 +1462,7 @@ function renderEventComments(comments) {
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
                 ${c.author_name.charAt(0).toUpperCase()}
-              </div>
+      </div>
               <span class="font-semibold text-gray-800">${c.author_name}</span>
               ${isOwner ? '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">You</span>' : ''}
             </div>
@@ -1491,7 +1581,13 @@ async function submitComment() {
     return;
   }
 
+  // Immediately append the comment to the UI (don't rely on WebSocket across replicas)
+  if (data.comment) {
+    appendCommentToList(data.comment);
+  }
+
   textarea.value = "";
+  showToast("Comment posted!", "success");
 }
 
 
